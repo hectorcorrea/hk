@@ -5,17 +5,15 @@
 <div class="row">
   {{ range $key, $blog := .Blogs }}
     <div class="col-md-4">
-      <h2>
-        <a href="{{ $blog.Url }}">{{ $blog.Title }}
+      <a class="thumbnail" href="{{ $blog.Url }}">
+        <h2>{{ $blog.Title }}</h2>
         {{ if $blog.IsDraft }}
           <span>(draft)</span>
         {{ end }}
         {{ if $blog.Thumbnail }}
           <img src="{{ $blog.Thumbnail }}">
         {{ end }}
-        </a>
-      </h2>
-      <p>{{ $blog.Summary }}</p>
+      </a>
     </div>
   {{ end }}
 </div>
