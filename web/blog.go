@@ -24,7 +24,7 @@ func init() {
 }
 
 func blogPages(resp http.ResponseWriter, req *http.Request) {
-	blogRouter.PrintRoutes();
+	blogRouter.PrintRoutes()
 	session := newSession(resp, req)
 	found, route := blogRouter.FindRoute(req.Method, req.URL.Path)
 	if found {

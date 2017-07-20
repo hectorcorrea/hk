@@ -1,9 +1,9 @@
 package viewModels
 
 import (
-	"html/template"
-
 	"hk/models"
+	"html/template"
+	"strings"
 )
 
 type Blog struct {
@@ -15,6 +15,7 @@ type Blog struct {
 	CreatedOn string
 	PostedOn  string
 	UpdatedOn string
+	Thumbnail string
 	IsDraft   bool
 	Html      template.HTML
 	Markdown  string
@@ -33,6 +34,9 @@ func FromBlog(blog models.Blog, session Session) Blog {
 	vm.Summary = blog.Summary
 	vm.Slug = blog.Slug
 	vm.Url = blog.URL("")
+	if strings.Contains(strings.ToLower(blog.Thumbnail), "_thumb.jpg") {
+		vm.Thumbnail = blog.Thumbnail
+	}
 	vm.Html = template.HTML(blog.ContentHtml)
 	vm.Markdown = blog.ContentMarkdown
 	vm.CreatedOn = blog.CreatedOn

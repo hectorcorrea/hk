@@ -17,6 +17,7 @@ type Blog struct {
 	Summary         string
 	Slug            string
 	Year            int64
+	Thumbnail       string
 	ContentHtml     string
 	ContentMarkdown string
 	CreatedOn       string
@@ -51,7 +52,7 @@ func BlogGetAll(showDrafts bool) ([]Blog, error) {
 }
 
 func BlogGetRecent(showDrafts bool) ([]Blog, error) {
-	year := time.Now().Year() - 1;
+	year := time.Now().Year() - 1
 	blogs, err := getBlogs(showDrafts, year)
 	return blogs, err
 }
@@ -257,13 +258,13 @@ func getBlogs(showDrafts bool, startYear int) ([]Blog, error) {
 	sqlSelect := ""
 	if showDrafts {
 		sqlSelect = `
-			SELECT id, title, summary, slug, year, postedOn
+			SELECT id, title, summary, slug, year, postedOn, thumbnail
 			FROM blogs
 			WHERE year >= ?
 			ORDER BY blogDate DESC`
 	} else {
 		sqlSelect = `
-			SELECT id, title, summary, slug, year, postedOn
+			SELECT id, title, summary, slug, year, postedOn, thumbnail
 			FROM blogs
 			WHERE postedOn IS NOT null and year >= ?
 			ORDER BY blogDate DESC`
@@ -277,19 +278,21 @@ func getBlogs(showDrafts bool, startYear int) ([]Blog, error) {
 	var blogs []Blog
 	var id int64
 	var year sql.NullInt64
-	var title, summary, slug sql.NullString
+	var title, summary, slug, thumbnail sql.NullString
 	var postedOn mysql.NullTime
 	for rows.Next() {
-		if err := rows.Scan(&id, &title, &summary, &slug, &year, &postedOn); err != nil {
+		err := rows.Scan(&id, &title, &summary, &slug, &year, &postedOn, &thumbnail)
+		if err != nil {
 			return nil, err
 		}
 		blog := Blog{
-			Id:       id,
-			Title:    stringValue(title),
-			Summary:  stringValue(summary),
-			Slug:     stringValue(slug),
-			Year: 		intValue(year),
-			PostedOn: timeValue(postedOn),
+			Id:        id,
+			Title:     stringValue(title),
+			Summary:   stringValue(summary),
+			Slug:      stringValue(slug),
+			Thumbnail: stringValue(thumbnail),
+			Year:      intValue(year),
+			PostedOn:  timeValue(postedOn),
 		}
 		blogs = append(blogs, blog)
 	}
