@@ -1,4 +1,4 @@
 hk
 .env
 deploy_prod.sh
-/misc/railsBlogs.sql
+# /misc/railsBlogs.sql
