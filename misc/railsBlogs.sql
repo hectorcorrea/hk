@@ -1,6 +1,6 @@
 CREATE DATABASE hkrails;
 
-USE hkrails;
+USE hkrails; 
 
 CREATE TABLE blogs (
   id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
