@@ -70,3 +70,10 @@ func stringValue(s sql.NullString) string {
 	}
 	return ""
 }
+
+func intValue(v sql.NullInt64) int64 {
+	if v.Valid {
+		return v.Int64
+	}
+	return 0
+}

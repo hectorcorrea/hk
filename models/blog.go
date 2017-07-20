@@ -16,6 +16,7 @@ type Blog struct {
 	Title           string
 	Summary         string
 	Slug            string
+	Year            int64
 	ContentHtml     string
 	ContentMarkdown string
 	CreatedOn       string
@@ -30,7 +31,7 @@ func (b Blog) DebugString() string {
 }
 
 func (b Blog) URL(base string) string {
-	return fmt.Sprintf("%s/blog/%s/%d", base, b.Slug, b.Id)
+	return fmt.Sprintf("%s/%d/%s/%d", base, b.Year, b.Slug, b.Id)
 }
 
 // RFC 1123Z looks like "Mon, 02 Jan 2006 15:04:05 -0700"
@@ -45,7 +46,13 @@ func (b Blog) PostedOnRFC1123Z() string {
 }
 
 func BlogGetAll(showDrafts bool) ([]Blog, error) {
-	blogs, err := getAll(showDrafts)
+	blogs, err := getBlogs(showDrafts, 0)
+	return blogs, err
+}
+
+func BlogGetRecent(showDrafts bool) ([]Blog, error) {
+	year := time.Now().Year() - 1;
+	blogs, err := getBlogs(showDrafts, year)
 	return blogs, err
 }
 
@@ -164,15 +171,16 @@ func getOne(id int64) (Blog, error) {
 	defer db.Close()
 
 	sqlSelect := `
-		SELECT title, summary, slug, content, contentMd,
+		SELECT title, summary, slug, year, content, contentMd,
 			createdOn, updatedOn, postedOn
 		FROM blogs
 		WHERE id = ?`
 	row := db.QueryRow(sqlSelect, id)
 
+	var year sql.NullInt64
 	var title, summary, slug, content, contentMd sql.NullString
 	var createdOn, updatedOn, postedOn mysql.NullTime
-	err = row.Scan(&title, &summary, &slug, &content, &contentMd,
+	err = row.Scan(&title, &summary, &slug, &year, &content, &contentMd,
 		&createdOn, &updatedOn, &postedOn)
 	if err != nil {
 		return Blog{}, err
@@ -183,6 +191,7 @@ func getOne(id int64) (Blog, error) {
 	blog.Title = stringValue(title)
 	blog.Summary = stringValue(summary)
 	blog.Slug = stringValue(slug)
+	blog.Year = intValue(year)
 	blog.ContentHtml = stringValue(content)
 	blog.ContentMarkdown = stringValue(contentMd)
 	blog.CreatedOn = timeValue(createdOn)
@@ -238,7 +247,7 @@ func MarkAsDraft(id int64) (Blog, error) {
 	return getOne(id)
 }
 
-func getAll(showDrafts bool) ([]Blog, error) {
+func getBlogs(showDrafts bool, startYear int) ([]Blog, error) {
 	db, err := connectDB()
 	if err != nil {
 		return nil, err
@@ -248,17 +257,18 @@ func getAll(showDrafts bool) ([]Blog, error) {
 	sqlSelect := ""
 	if showDrafts {
 		sqlSelect = `
-			SELECT id, title, summary, slug, postedOn
+			SELECT id, title, summary, slug, year, postedOn
 			FROM blogs
-			ORDER BY postedOn DESC`
+			WHERE year >= ?
+			ORDER BY blogDate DESC`
 	} else {
 		sqlSelect = `
-			SELECT id, title, summary, slug, postedOn
+			SELECT id, title, summary, slug, year, postedOn
 			FROM blogs
-			WHERE postedOn IS NOT null
-			ORDER BY postedOn DESC`
+			WHERE postedOn IS NOT null and year >= ?
+			ORDER BY blogDate DESC`
 	}
-	rows, err := db.Query(sqlSelect)
+	rows, err := db.Query(sqlSelect, startYear)
 	if err != nil {
 		return nil, err
 	}
@@ -266,10 +276,11 @@ func getAll(showDrafts bool) ([]Blog, error) {
 
 	var blogs []Blog
 	var id int64
+	var year sql.NullInt64
 	var title, summary, slug sql.NullString
 	var postedOn mysql.NullTime
 	for rows.Next() {
-		if err := rows.Scan(&id, &title, &summary, &slug, &postedOn); err != nil {
+		if err := rows.Scan(&id, &title, &summary, &slug, &year, &postedOn); err != nil {
 			return nil, err
 		}
 		blog := Blog{
@@ -277,6 +288,7 @@ func getAll(showDrafts bool) ([]Blog, error) {
 			Title:    stringValue(title),
 			Summary:  stringValue(summary),
 			Slug:     stringValue(slug),
+			Year: 		intValue(year),
 			PostedOn: timeValue(postedOn),
 		}
 		blogs = append(blogs, blog)

@@ -25,29 +25,11 @@ func StartWebServer(address string) {
 	http.Handle("/robots.txt", fs)
 	http.Handle("/public/", http.StripPrefix("/public/", fs))
 	http.HandleFunc("/auth/", authPages)
-	http.HandleFunc("/blog/", blogPages)
-	http.HandleFunc("/", staticPages)
+	http.HandleFunc("/", blogPages)
 
 	err := http.ListenAndServe(address, nil)
 	if err != nil {
 		log.Fatal("Failed to start the web server: ", err)
-	}
-}
-
-func staticPages(resp http.ResponseWriter, req *http.Request) {
-	session := newSession(resp, req)
-	vm := session.toViewModel()
-	viewName := viewForPath(req.URL.Path)
-	if viewName != "" {
-		t, err := loadTemplate(session, viewName)
-		if err == nil {
-			log.Printf(fmt.Sprintf("Rendered %s (%s)", viewName, req.URL.Path))
-			cacheResponse(resp)
-			t.Execute(resp, vm)
-		}
-	} else {
-		cacheResponse(resp)
-		renderNotFound(session)
 	}
 }
 
@@ -57,16 +39,6 @@ func cacheResponse(resp http.ResponseWriter) {
 	cacheControl := fmt.Sprintf("public, max-age=%.f", time.Duration(fiveMinutes).Seconds())
 	resp.Header().Add("Cache-Control", cacheControl)
 	resp.Header().Add("Expires", later.UTC().String())
-}
-
-func viewForPath(path string) string {
-	var viewName string
-	if path == "/about" || path == "/credits" {
-		viewName = fmt.Sprintf("views%s.html", path)
-	} else if path == "/" {
-		viewName = "views/index.html"
-	}
-	return viewName
 }
 
 func renderNotFound(s session) {

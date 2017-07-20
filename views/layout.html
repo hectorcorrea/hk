@@ -6,10 +6,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="HectorCorrea.com">
+    <meta name="description" content="Hector y Karla.com">
     <meta name="author" content="hector@hectorcorrea.com">
 
-    <title>HectorCorrea.com</title>
+    <title>H&amp;K</title>
 
     <link rel="shortcut icon" href="/public/favicon.ico" />
     <link rel="apple-touch-icon" href="/public/favicon.png"/>
@@ -104,16 +104,15 @@
             <span class="icon-bar"></span>
           </button>
           {{ if .IsAuth }}
-            <a class="navbar-brand" href="/">Hector Correa*</a>
+            <a class="navbar-brand" href="/">Hector y Karla*</a>
           {{ else }}
-            <a class="navbar-brand" href="/">Hector Correa</a>
+            <a class="navbar-brand" href="/">Hector y Karla</a>
           {{ end }}
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li><a href="/">Home</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/blog">Blog</a></li>
+            <li><a href="/archive">Archive</a></li>
           </ul>
         </div>
       </div>
@@ -125,13 +124,7 @@
 
 <div class="container">
   <footer>
-    <p>
-      <hr>
-      <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" />
-      This work is licensed under a
-      <a rel="license" target="_blank" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
-      | <a href="/credits">Credits</a>.
-    </p>
+    <p>&copy; Hector &amp; Karla 2000-2017</p>
   </footer>
 </div>
 
@@ -143,13 +136,6 @@
   $('.nav li a').on('click',function(){
     $('.navbar-collapse').collapse('hide');
   });
-</script>
-
-<!-- Redirect legacy blog URLs -->
-<script type="text/javascript">
-  if (window.location.hash.startsWith("#/blog")) {
-    window.location = window.location.toString().replace("#/blog/","blog/");
-  }
 </script>
 
 <!-- Track visit with Google Analytics -->
