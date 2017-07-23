@@ -1,9 +1,16 @@
 {{ define "content" }}
 
-<h1>All Blog Posts</h1>
+<h1>Welcome to H&amp;K</h1>
 
 <div class="row">
   {{ range $key, $blog := .Blogs }}
+    {{ if $blog.IsNewYear }}
+      <div class="col-md-4 alert alert-info" id="year_{{ $blog.Year }}">
+        <h2>{{ $blog.Year }} starts here &#8594;</h2>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+      </div>
+    {{ end }}
+
     <div class="col-md-4">
       <a class="thumbnail" href="{{ $blog.Url }}">
         <h2>{{ $blog.Title }}</h2>

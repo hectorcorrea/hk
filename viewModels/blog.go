@@ -4,6 +4,7 @@ import (
 	"hk/models"
 	"html/template"
 	"strings"
+	"time"
 )
 
 type Blog struct {
@@ -16,6 +17,8 @@ type Blog struct {
 	PostedOn  string
 	UpdatedOn string
 	Thumbnail string
+	Year 			int
+	IsNewYear bool
 	IsDraft   bool
 	Html      template.HTML
 	Markdown  string
@@ -42,15 +45,23 @@ func FromBlog(blog models.Blog, session Session) Blog {
 	vm.CreatedOn = blog.CreatedOn
 	vm.PostedOn = blog.PostedOn
 	vm.UpdatedOn = blog.UpdatedOn
+	vm.Year = blog.Year
 	vm.IsDraft = (vm.PostedOn == "")
+	vm.IsNewYear = false
 	vm.Session = session
 	return vm
 }
 
 func FromBlogs(blogs []models.Blog, session Session) BlogList {
 	var list []Blog
+	lastYear := time.Now().Year()
 	for _, blog := range blogs {
-		list = append(list, FromBlog(blog, session))
+		vm := FromBlog(blog, session)
+		if blog.Year != lastYear {
+			vm.IsNewYear = true
+			lastYear = int(blog.Year)
+		}
+		list = append(list, vm)
 	}
 	return BlogList{Blogs: list, Session: session}
 }

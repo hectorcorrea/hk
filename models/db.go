@@ -71,9 +71,9 @@ func stringValue(s sql.NullString) string {
 	return ""
 }
 
-func intValue(v sql.NullInt64) int64 {
+func intValue(v sql.NullInt64) int {
 	if v.Valid {
-		return v.Int64
+		return int(v.Int64)
 	}
 	return 0
 }

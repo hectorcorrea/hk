@@ -16,7 +16,7 @@ type Blog struct {
 	Title           string
 	Summary         string
 	Slug            string
-	Year            int64
+	Year            int
 	Thumbnail       string
 	ContentHtml     string
 	ContentMarkdown string
