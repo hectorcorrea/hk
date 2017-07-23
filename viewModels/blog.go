@@ -3,6 +3,7 @@ package viewModels
 import (
 	"hk/models"
 	"html/template"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -17,7 +18,7 @@ type Blog struct {
 	PostedOn  string
 	UpdatedOn string
 	Thumbnail string
-	Year 			int
+	Year      int
 	IsNewYear bool
 	IsDraft   bool
 	Html      template.HTML
@@ -40,7 +41,7 @@ func FromBlog(blog models.Blog, session Session) Blog {
 	if strings.Contains(strings.ToLower(blog.Thumbnail), "_thumb.jpg") {
 		vm.Thumbnail = blog.Thumbnail
 	}
-	vm.Html = template.HTML(blog.ContentHtml)
+	vm.Html = template.HTML(addGalleryTags(blog.ContentHtml))
 	vm.Markdown = blog.ContentMarkdown
 	vm.CreatedOn = blog.CreatedOn
 	vm.PostedOn = blog.PostedOn
@@ -64,4 +65,37 @@ func FromBlogs(blogs []models.Blog, session Session) BlogList {
 		list = append(list, vm)
 	}
 	return BlogList{Blogs: list, Session: session}
+}
+
+func addGalleryTags(html string) string {
+	reImg := regexp.MustCompile("<img(.*?) src=\"(.*?)\"(.*?)/>")
+	imgTags := reImg.FindAllString(html, -1)
+	for _, img := range imgTags {
+		html = strings.Replace(html, img, wrapImgTag(img), 1)
+	}
+	return html
+}
+
+func wrapImgTag(img string) string {
+	reSrc := regexp.MustCompile("src=\"(.*?)\"")
+	reAlt := regexp.MustCompile("alt=\"(.*?)\"")
+	src := reSrc.FindString(img) // src="hello.jpg"
+	srcValue := TextInQuotes(src)
+	alt := reAlt.FindString(img) // alt="hello"
+	file := strings.Replace(srcValue, "_thumb.jpg", ".jpg", 1)
+	newImg := "<img src=\"" + srcValue + "\" " + alt + " />"
+
+	newTag := "<a href=\"" + file + "\" >\r\n"
+	newTag += "  " + newImg + "\r\n"
+	newTag += "</a>\r\n"
+	return newTag
+}
+
+func TextInQuotes(text string) string {
+	q1 := strings.Index(text, "\"") + 1
+	q2 := strings.LastIndex(text, "\"")
+	if (q2 < q1) {
+		return ""
+	}
+	return text[q1:q2]
 }

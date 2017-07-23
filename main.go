@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"log"
 	"hk/models"
 	"hk/web"
+	"log"
 )
 
 func main() {
