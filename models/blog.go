@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"hk/markdown"
-
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -19,7 +17,6 @@ type Blog struct {
 	Year            int
 	Thumbnail       string
 	ContentHtml     string
-	ContentMarkdown string
 	CreatedOn       string
 	UpdatedOn       string
 	PostedOn        string
@@ -73,8 +70,6 @@ func BlogGetBySlug(slug string) (Blog, error) {
 func (b *Blog) beforeSave() error {
 	b.Slug = getSlug(b.Title)
 	b.UpdatedOn = dbUtcNow()
-	var parser markdown.Parser
-	b.ContentHtml = parser.ToHtml(b.ContentMarkdown)
 	return nil
 }
 
@@ -139,10 +134,10 @@ func (b *Blog) Save() error {
 
 	sqlUpdate := `
 		UPDATE blogs
-		SET title = ?, summary = ?, slug = ?, content = ?, contentMd = ?, updatedOn = ?
+		SET title = ?, summary = ?, slug = ?, content = ?, updatedOn = ?
 		WHERE id = ?`
 	_, err = db.Exec(sqlUpdate, b.Title, b.Summary, b.Slug,
-		b.ContentHtml, b.ContentMarkdown, dbUtcNow(), b.Id)
+		b.ContentHtml, dbUtcNow(), b.Id)
 	return err
 }
 
@@ -157,10 +152,10 @@ func (b *Blog) Import() error {
 	b.Slug = getSlug(b.Title)
 
 	sqlUpdate := `
-		INSERT INTO blogs(id, title, summary, slug, content, contentMd, createdOn, updatedOn, postedOn)
+		INSERT INTO blogs(id, title, summary, slug, content, createdOn, updatedOn, postedOn)
 		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err = db.Exec(sqlUpdate, b.Id, b.Title, b.Summary, b.Slug,
-		b.ContentHtml, b.ContentMarkdown, b.CreatedOn, b.UpdatedOn, b.PostedOn)
+		b.ContentHtml, b.CreatedOn, b.UpdatedOn, b.PostedOn)
 	return err
 }
 
@@ -194,7 +189,6 @@ func getOne(id int64) (Blog, error) {
 	blog.Slug = stringValue(slug)
 	blog.Year = intValue(year)
 	blog.ContentHtml = stringValue(content)
-	blog.ContentMarkdown = stringValue(contentMd)
 	blog.CreatedOn = timeValue(createdOn)
 	blog.UpdatedOn = timeValue(updatedOn)
 	blog.PostedOn = timeValue(postedOn)

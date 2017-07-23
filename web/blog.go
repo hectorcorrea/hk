@@ -189,6 +189,6 @@ func blogFromForm(id int64, s session) models.Blog {
 	blog.Id = id
 	blog.Title = s.req.FormValue("title")
 	blog.Summary = s.req.FormValue("summary")
-	blog.ContentMarkdown = s.req.FormValue("content")
+	blog.ContentHtml = s.req.FormValue("content")
 	return blog
 }
