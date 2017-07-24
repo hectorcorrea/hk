@@ -114,9 +114,9 @@ func SaveNew() (int64, error) {
 	defer db.Close()
 
 	sqlInsert := `
-		INSERT INTO blogs(title, summary, slug, content, contentMd, createdOn)
+		INSERT INTO blogs(title, summary, slug, content, createdOn)
 		VALUES(?, ?, ?, ?, ?, ?)`
-	result, err := db.Exec(sqlInsert, "new blog", "", "new-blog", "", "", dbUtcNow())
+	result, err := db.Exec(sqlInsert, "new blog", "", "new-blog", "", dbUtcNow())
 	if err != nil {
 		return 0, err
 	}
@@ -167,16 +167,16 @@ func getOne(id int64) (Blog, error) {
 	defer db.Close()
 
 	sqlSelect := `
-		SELECT title, summary, slug, year, content, contentMd,
+		SELECT title, summary, slug, year, content,
 			createdOn, updatedOn, postedOn
 		FROM blogs
 		WHERE id = ?`
 	row := db.QueryRow(sqlSelect, id)
 
 	var year sql.NullInt64
-	var title, summary, slug, content, contentMd sql.NullString
+	var title, summary, slug, content sql.NullString
 	var createdOn, updatedOn, postedOn mysql.NullTime
-	err = row.Scan(&title, &summary, &slug, &year, &content, &contentMd,
+	err = row.Scan(&title, &summary, &slug, &year, &content,
 		&createdOn, &updatedOn, &postedOn)
 	if err != nil {
 		return Blog{}, err

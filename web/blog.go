@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"hk/models"
 	"hk/viewModels"
@@ -13,6 +14,7 @@ import (
 var blogRouter Router
 
 func init() {
+	blogRouter.Add("GET", "/blogs/:title_id", blogViewOneLegacy)
 	blogRouter.Add("GET", "/:year/:title/:id", blogViewOne)
 	blogRouter.Add("GET", "/archive", blogViewAll)
 	blogRouter.Add("GET", "/", blogViewRecent)
@@ -57,6 +59,28 @@ func blogViewOne(s session, values map[string]string) {
 	log.Print("blogViewOne")
 	vm := viewModels.FromBlog(blog, s.toViewModel())
 	renderTemplate(s, "views/blogView.html", vm)
+}
+
+func blogViewOneLegacy(s session, values map[string]string) {
+	log.Print("blogViewOneLegacy")
+
+	id := idFromLegacyUrl(values["title_id"])
+	if id == 0 {
+		log.Printf("blogViewOneLegacy id %s", "no id")
+		renderError(s, "No Blog ID was received", nil)
+		return
+	}
+
+	log.Printf("blogViewOneLegacy id %d", id)
+	blog, err := models.BlogGetById(id)
+	if err != nil {
+		renderError(s, "Fetching by ID", err)
+		return
+	}
+
+	newUrl := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, blog.Id)
+	log.Printf("Redirected to %s", newUrl)
+	http.Redirect(s.resp, s.req, newUrl, http.StatusMovedPermanently)
 }
 
 func blogViewRecent(s session, values map[string]string) {
@@ -182,6 +206,18 @@ func blogEdit(s session, values map[string]string) {
 func idFromString(str string) int64 {
 	id, _ := strconv.ParseInt(str, 10, 64)
 	return id
+}
+
+func idFromLegacyUrl(url string) int64 {
+	// url is expected as 2017-something-something-123
+	// where 123 is the ID.
+	index := strings.LastIndex(url, "-")
+	if index == -1 {
+		return 0
+	}
+
+	idString := url[index+1:len(url)]
+	return idFromString(idString)
 }
 
 func blogFromForm(id int64, s session) models.Blog {
