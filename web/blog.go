@@ -54,6 +54,15 @@ func blogViewOne(s session, values map[string]string) {
 		return
 	}
 
+	year := values["year"]
+	slug := values["title"]
+	if ((year != strconv.Itoa(blog.Year)) || (slug != blog.Slug)) {
+		newUrl := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, blog.Id)
+		log.Printf("Redirected to %s", newUrl)
+		http.Redirect(s.resp, s.req, newUrl, http.StatusMovedPermanently)
+		return
+	}
+
 	log.Print("blogViewOne")
 	vm := viewModels.FromBlog(blog, s.toViewModel(), false)
 	renderTemplate(s, "views/blogView.html", vm)
@@ -64,20 +73,20 @@ func blogViewOneLegacy(s session, values map[string]string) {
 
 	id := idFromLegacyUrl(values["title_id"])
 	if id == 0 {
-		log.Printf("blogViewOneLegacy id %s", "no id")
-		renderError(s, "No Blog ID was received", nil)
+		log.Printf("Legacy post without an ID. Redirected to home page.")
+		http.Redirect(s.resp, s.req, "/", http.StatusMovedPermanently)
 		return
 	}
 
-	log.Printf("blogViewOneLegacy id %d", id)
 	blog, err := models.BlogGetById(id)
 	if err != nil {
-		renderError(s, "Fetching by ID", err)
+		log.Printf("Legacy post %d not found. Redirected to home page.", id)
+		http.Redirect(s.resp, s.req, "/", http.StatusMovedPermanently)
 		return
 	}
 
 	newUrl := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, blog.Id)
-	log.Printf("Redirected to %s", newUrl)
+	log.Printf("Legacy %d redirected to %s", id, newUrl)
 	http.Redirect(s.resp, s.req, newUrl, http.StatusMovedPermanently)
 }
 
