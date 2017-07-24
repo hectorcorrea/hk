@@ -24,7 +24,7 @@ func InitDB() error {
 		driver:   env("DB_DRIVER", "mysql"),
 		user:     env("DB_USER", "root"),
 		password: env("DB_PASSWORD", ""),
-		database: env("DB_NAME", "hk"),
+		database: env("DB_NAME", "hkdb"),
 	}
 	dbSettings.connString = fmt.Sprintf("%s:%s@/%s?parseTime=true", dbSettings.user, dbSettings.password, dbSettings.database)
 	return CreateDefaultUser()

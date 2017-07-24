@@ -1,6 +1,6 @@
-CREATE DATABASE hk;
+CREATE DATABASE hkdb;
 
-USE hk;
+USE hkdb;
 
 CREATE TABLE blogs (
   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -8,7 +8,6 @@ CREATE TABLE blogs (
   summary VARCHAR(255) NULL,
   slug VARCHAR(255) NULL,
   content MEDIUMTEXT NULL,
-  contentMd MEDIUMTEXT NULL,
   thumbnail varchar(255),
   blogDate date,
   year int,
@@ -24,7 +23,7 @@ CREATE INDEX blogs_index_blogDaten ON blogs(blogDate DESC);
 CREATE TABLE users (
   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
   login VARCHAR(255) NOT NULL,
-  name VARCHAR(20) NOT NULL,
+  name VARCHAR(255) NOT NULL,
   password VARCHAR(255) NOT NULL
 );
 
