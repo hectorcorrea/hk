@@ -18,15 +18,13 @@ func init() {
 	blogRouter.Add("GET", "/:year/:title/:id", blogViewOne)
 	blogRouter.Add("GET", "/archive", blogViewAll)
 	blogRouter.Add("GET", "/", blogViewRecent)
-	blogRouter.Add("POST", "/:title/:id/edit", blogEdit)
-	blogRouter.Add("POST", "/:title/:id/save", blogSave)
-	blogRouter.Add("POST", "/:title/:id/post", blogPost)
-	blogRouter.Add("POST", "/:title/:id/draft", blogDraft)
+	blogRouter.Add("POST", "/:year/:title/:id/edit", blogEdit)
+	blogRouter.Add("POST", "/:year/:title/:id/save", blogSave)
 	blogRouter.Add("POST", "/new", blogNew)
 }
 
 func blogPages(resp http.ResponseWriter, req *http.Request) {
-	blogRouter.PrintRoutes()
+	// blogRouter.PrintRoutes()
 	session := newSession(resp, req)
 	found, route := blogRouter.FindRoute(req.Method, req.URL.Path)
 	if found {
@@ -57,7 +55,7 @@ func blogViewOne(s session, values map[string]string) {
 	}
 
 	log.Print("blogViewOne")
-	vm := viewModels.FromBlog(blog, s.toViewModel())
+	vm := viewModels.FromBlog(blog, s.toViewModel(), false)
 	renderTemplate(s, "views/blogView.html", vm)
 }
 
@@ -116,7 +114,7 @@ func blogSave(s session, values map[string]string) {
 	if err := blog.Save(); err != nil {
 		renderError(s, fmt.Sprintf("Saving blog ID: %d"), err)
 	} else {
-		url := fmt.Sprintf("/blog/%s/%d", blog.Slug, id)
+		url := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, id)
 		log.Printf("Redirect to %s", url)
 		http.Redirect(s.resp, s.req, url, 301)
 	}
@@ -137,50 +135,6 @@ func blogNew(s session, values map[string]string) {
 	blogEdit(s, values)
 }
 
-func blogDraft(s session, values map[string]string) {
-	if !s.isAuth() {
-		renderNotAuthorized(s)
-		return
-	}
-	id := idFromString(values["id"])
-	if id == 0 {
-		renderError(s, "No blog ID was received", nil)
-		return
-	}
-
-	blog, err := models.MarkAsDraft(id)
-	if err != nil {
-		renderError(s, fmt.Sprintf("Mark as draft: %d", id), err)
-		return
-	}
-
-	url := fmt.Sprintf("/blog/%s/%d", blog.Slug, id)
-	log.Printf("Marked as draft: %s", url)
-	http.Redirect(s.resp, s.req, url, 301)
-}
-
-func blogPost(s session, values map[string]string) {
-	if !s.isAuth() {
-		renderNotAuthorized(s)
-		return
-	}
-	id := idFromString(values["id"])
-	if id == 0 {
-		renderError(s, "No blog ID was received", nil)
-		return
-	}
-
-	blog, err := models.MarkAsPosted(id)
-	if err != nil {
-		renderError(s, fmt.Sprintf("Mark as posted: %d", id), err)
-		return
-	}
-
-	url := fmt.Sprintf("/blog/%s/%d", blog.Slug, id)
-	log.Printf("Mark as posted: %s", url)
-	http.Redirect(s.resp, s.req, url, 301)
-}
-
 func blogEdit(s session, values map[string]string) {
 	if !s.isAuth() {
 		renderNotAuthorized(s)
@@ -199,7 +153,7 @@ func blogEdit(s session, values map[string]string) {
 		return
 	}
 
-	vm := viewModels.FromBlog(blog, s.toViewModel())
+	vm := viewModels.FromBlog(blog, s.toViewModel(), true)
 	renderTemplate(s, "views/blogEdit.html", vm)
 }
 
@@ -216,7 +170,7 @@ func idFromLegacyUrl(url string) int64 {
 		return 0
 	}
 
-	idString := url[index+1:len(url)]
+	idString := url[index+1 : len(url)]
 	return idFromString(idString)
 }
 
@@ -226,5 +180,7 @@ func blogFromForm(id int64, s session) models.Blog {
 	blog.Title = s.req.FormValue("title")
 	blog.Summary = s.req.FormValue("summary")
 	blog.ContentHtml = s.req.FormValue("content")
+	blog.Thumbnail = s.req.FormValue("thumbnail")
+	blog.BlogDate = s.req.FormValue("blogdate")
 	return blog
 }

@@ -57,6 +57,13 @@ func dbUtcNow() string {
 	return s
 }
 
+func dateValue(t mysql.NullTime) string {
+	if t.Valid {
+		return t.Time.String()[0:10]
+	}
+	return ""
+}
+
 func timeValue(t mysql.NullTime) string {
 	if t.Valid {
 		return t.Time.String()

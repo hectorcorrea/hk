@@ -18,6 +18,7 @@ type Blog struct {
 	PostedOn  string
 	UpdatedOn string
 	Thumbnail string
+	BlogDate  string
 	Year      int
 	IsNewYear bool
 	IsDraft   bool
@@ -30,7 +31,7 @@ type BlogList struct {
 	Session
 }
 
-func FromBlog(blog models.Blog, session Session) Blog {
+func FromBlog(blog models.Blog, session Session, raw bool) Blog {
 	var vm Blog
 	vm.Id = blog.Id
 	vm.Title = blog.Title
@@ -40,11 +41,16 @@ func FromBlog(blog models.Blog, session Session) Blog {
 	if strings.Contains(strings.ToLower(blog.Thumbnail), "_thumb.jpg") {
 		vm.Thumbnail = blog.Thumbnail
 	}
-	vm.Html = template.HTML(addGalleryTags(blog.ContentHtml))
+	if raw {
+		vm.Html = template.HTML(blog.ContentHtml)
+	} else {
+		vm.Html = template.HTML(addGalleryTags(blog.ContentHtml))
+	}
 	vm.CreatedOn = blog.CreatedOn
 	vm.PostedOn = blog.PostedOn
 	vm.UpdatedOn = blog.UpdatedOn
 	vm.Year = blog.Year
+	vm.BlogDate = blog.BlogDate
 	vm.IsDraft = (vm.PostedOn == "")
 	vm.IsNewYear = false
 	vm.Session = session
@@ -55,7 +61,7 @@ func FromBlogs(blogs []models.Blog, session Session) BlogList {
 	var list []Blog
 	lastYear := time.Now().Year()
 	for _, blog := range blogs {
-		vm := FromBlog(blog, session)
+		vm := FromBlog(blog, session, true)
 		if blog.Year != lastYear {
 			vm.IsNewYear = true
 			lastYear = int(blog.Year)
@@ -92,7 +98,7 @@ func wrapImgTag(img string) string {
 func TextInQuotes(text string) string {
 	q1 := strings.Index(text, "\"") + 1
 	q2 := strings.LastIndex(text, "\"")
-	if (q2 < q1) {
+	if q2 < q1 {
 		return ""
 	}
 	return text[q1:q2]

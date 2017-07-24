@@ -14,9 +14,6 @@
     <div class="col-md-4">
       <a class="thumbnail" href="{{ $blog.Url }}">
         <h2>{{ $blog.Title }}</h2>
-        {{ if $blog.IsDraft }}
-          <span>(draft)</span>
-        {{ end }}
         {{ if $blog.Thumbnail }}
           <img src="{{ $blog.Thumbnail }}">
         {{ end }}
@@ -28,7 +25,7 @@
 {{ if .Session.IsAuth }}
   <div class="row">
     <p>
-      <form action="/blog/new" method="post">
+      <form action="/new" method="post">
         <button class="btn btn-primary" type="submit">New Post</button>
       </form>
     </p>

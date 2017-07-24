@@ -7,20 +7,6 @@
       <button type="submit" class="btn btn-primary">Edit</button>
     </div>
   </form>
-
-  {{ if .IsDraft }}
-    <form action="{{ .Url }}/post" method="post">
-      <div class="form-group">
-        <button type="submit" class="btn">Post Blog</button>
-      </div>
-    </form>
-  {{ else }}
-    <form action="{{ .Url }}/draft" method="post">
-      <div class="form-group">
-        <button type="submit" class="btn">Mask as Draft</button>
-      </div>
-    </form>
-  {{ end }}
 {{ end }}
 
 <div id="links">

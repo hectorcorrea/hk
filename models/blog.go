@@ -3,23 +3,24 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 type Blog struct {
-	Id              int64
-	Title           string
-	Summary         string
-	Slug            string
-	Year            int
-	Thumbnail       string
-	ContentHtml     string
-	CreatedOn       string
-	UpdatedOn       string
-	PostedOn        string
+	Id          int64
+	Title       string
+	Summary     string
+	Slug        string
+	BlogDate    string
+	Year        int
+	Thumbnail   string
+	ContentHtml string
+	CreatedOn   string
+	UpdatedOn   string
+	PostedOn    string
 }
 
 func (b Blog) DebugString() string {
@@ -70,7 +71,20 @@ func BlogGetBySlug(slug string) (Blog, error) {
 func (b *Blog) beforeSave() error {
 	b.Slug = getSlug(b.Title)
 	b.UpdatedOn = dbUtcNow()
+	if b.BlogDate == "" {
+		b.BlogDate = b.UpdatedOn
+	}
+	b.BlogDate = b.BlogDate[0:10]
+	b.Year = yearFromDbDate(b.BlogDate)
 	return nil
+}
+
+func yearFromDbDate(dbDate string) int {
+	if len(dbDate) < 4 {
+		return 0
+	}
+	id, _ := strconv.ParseInt(dbDate[0:4], 10, 64)
+	return int(id)
 }
 
 func getSlug(title string) string {
@@ -113,10 +127,12 @@ func SaveNew() (int64, error) {
 	}
 	defer db.Close()
 
+	dbNow := dbUtcNow()
 	sqlInsert := `
-		INSERT INTO blogs(title, summary, slug, content, createdOn)
-		VALUES(?, ?, ?, ?, ?, ?)`
-	result, err := db.Exec(sqlInsert, "new blog", "", "new-blog", "", dbUtcNow())
+		INSERT INTO blogs(title, summary, slug, content, blogDate, year, createdOn)
+		VALUES(?, ?, ?, ?, ?, ?, ?)`
+	result, err := db.Exec(sqlInsert, "new blog", "", "new-blog", "",
+		dbNow, yearFromDbDate(dbNow), dbNow)
 	if err != nil {
 		return 0, err
 	}
@@ -134,28 +150,11 @@ func (b *Blog) Save() error {
 
 	sqlUpdate := `
 		UPDATE blogs
-		SET title = ?, summary = ?, slug = ?, content = ?, updatedOn = ?
+		SET title = ?, slug = ?, content = ?,
+			blogDate = ?, year = ?, updatedOn = ?
 		WHERE id = ?`
-	_, err = db.Exec(sqlUpdate, b.Title, b.Summary, b.Slug,
-		b.ContentHtml, dbUtcNow(), b.Id)
-	return err
-}
-
-func (b *Blog) Import() error {
-	db, err := connectDB()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	// Recalculate the slug value but not the updatedOn.
-	b.Slug = getSlug(b.Title)
-
-	sqlUpdate := `
-		INSERT INTO blogs(id, title, summary, slug, content, createdOn, updatedOn, postedOn)
-		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err = db.Exec(sqlUpdate, b.Id, b.Title, b.Summary, b.Slug,
-		b.ContentHtml, b.CreatedOn, b.UpdatedOn, b.PostedOn)
+	_, err = db.Exec(sqlUpdate, b.Title, b.Slug, b.ContentHtml,
+		b.BlogDate, b.Year, dbUtcNow(), b.Id)
 	return err
 }
 
@@ -167,16 +166,16 @@ func getOne(id int64) (Blog, error) {
 	defer db.Close()
 
 	sqlSelect := `
-		SELECT title, summary, slug, year, content,
+		SELECT title, slug, blogDate, year, content, thumbnail,
 			createdOn, updatedOn, postedOn
 		FROM blogs
 		WHERE id = ?`
 	row := db.QueryRow(sqlSelect, id)
 
 	var year sql.NullInt64
-	var title, summary, slug, content sql.NullString
-	var createdOn, updatedOn, postedOn mysql.NullTime
-	err = row.Scan(&title, &summary, &slug, &year, &content,
+	var title, slug, content, thumbnail sql.NullString
+	var blogDate, createdOn, updatedOn, postedOn mysql.NullTime
+	err = row.Scan(&title, &slug, &blogDate, &year, &content, &thumbnail,
 		&createdOn, &updatedOn, &postedOn)
 	if err != nil {
 		return Blog{}, err
@@ -185,10 +184,11 @@ func getOne(id int64) (Blog, error) {
 	var blog Blog
 	blog.Id = id
 	blog.Title = stringValue(title)
-	blog.Summary = stringValue(summary)
 	blog.Slug = stringValue(slug)
 	blog.Year = intValue(year)
+	blog.BlogDate = dateValue(blogDate)
 	blog.ContentHtml = stringValue(content)
+	blog.Thumbnail = stringValue(thumbnail)
 	blog.CreatedOn = timeValue(createdOn)
 	blog.UpdatedOn = timeValue(updatedOn)
 	blog.PostedOn = timeValue(postedOn)
@@ -211,37 +211,6 @@ func getIdBySlug(slug string) (int64, error) {
 	return id, nil
 }
 
-func MarkAsPosted(id int64) (Blog, error) {
-	db, err := connectDB()
-	if err != nil {
-		return Blog{}, err
-	}
-	defer db.Close()
-
-	now := time.Now().UTC()
-	sqlUpdate := "UPDATE blogs SET postedOn = ? WHERE id = ?"
-	_, err = db.Exec(sqlUpdate, now, id)
-	if err != nil {
-		return Blog{}, err
-	}
-	return getOne(id)
-}
-
-func MarkAsDraft(id int64) (Blog, error) {
-	db, err := connectDB()
-	if err != nil {
-		return Blog{}, err
-	}
-	defer db.Close()
-
-	sqlUpdate := "UPDATE blogs SET postedOn = NULL WHERE id = ?"
-	_, err = db.Exec(sqlUpdate, id)
-	if err != nil {
-		return Blog{}, err
-	}
-	return getOne(id)
-}
-
 func getBlogs(showDrafts bool, startYear int) ([]Blog, error) {
 	db, err := connectDB()
 	if err != nil {
@@ -249,20 +218,12 @@ func getBlogs(showDrafts bool, startYear int) ([]Blog, error) {
 	}
 	defer db.Close()
 
-	sqlSelect := ""
-	if showDrafts {
-		sqlSelect = `
-			SELECT id, title, summary, slug, year, postedOn, thumbnail
-			FROM blogs
-			WHERE year >= ?
-			ORDER BY blogDate DESC`
-	} else {
-		sqlSelect = `
-			SELECT id, title, summary, slug, year, postedOn, thumbnail
-			FROM blogs
-			WHERE postedOn IS NOT null and year >= ?
-			ORDER BY blogDate DESC`
-	}
+	// ignore showDrafts
+	sqlSelect := `
+		SELECT id, title, summary, slug, year, postedOn, thumbnail
+		FROM blogs
+		WHERE year >= ?
+		ORDER BY blogDate DESC`
 	rows, err := db.Query(sqlSelect, startYear)
 	if err != nil {
 		return nil, err
