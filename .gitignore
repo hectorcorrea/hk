@@ -1,5 +1,5 @@
 hk
 .env
+run.sh
 deploy_prod.sh
-# /misc/railsBlogs.sql
 .DS_Store
