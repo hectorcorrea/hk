@@ -43,7 +43,7 @@ The code will connect to a MySQL database with the parameters indicated in the f
 
 * DB_USER (root)
 * DB_PASSWORD ()
-* DB_NAME (hk)
+* DB_NAME (hkdb)
 
 You can see where these values are used in `models/db.go`
 

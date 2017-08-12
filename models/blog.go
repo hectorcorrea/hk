@@ -151,10 +151,11 @@ func (b *Blog) Save() error {
 	sqlUpdate := `
 		UPDATE blogs
 		SET title = ?, slug = ?, content = ?,
-			blogDate = ?, year = ?, updatedOn = ?
+			blogDate = ?, year = ?, updatedOn = ?,
+			thumbnail = ?
 		WHERE id = ?`
 	_, err = db.Exec(sqlUpdate, b.Title, b.Slug, b.ContentHtml,
-		b.BlogDate, b.Year, dbUtcNow(), b.Id)
+		b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, b.Id)
 	return err
 }
 
