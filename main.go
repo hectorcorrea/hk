@@ -9,12 +9,14 @@ import (
 
 func main() {
 	var address = flag.String("address", "localhost:9001", "Address where server will listen for connections")
-	var resave = flag.String("resave", "", "Resaves all blog posts to force recalculate of HTML content")
+	var resave = flag.String("resave", "", "Pass \"yes\" to resave all blog posts and recalculate the HTML content.")
 	flag.Parse()
-	if *resave != "" {
+
+	if *resave == "yes" {
 		resaveAll()
 		return
 	}
+
 	web.StartWebServer(*address)
 }
 

@@ -56,7 +56,7 @@ func blogViewOne(s session, values map[string]string) {
 
 	year := values["year"]
 	slug := values["title"]
-	if ((year != strconv.Itoa(blog.Year)) || (slug != blog.Slug)) {
+	if (year != strconv.Itoa(blog.Year)) || (slug != blog.Slug) {
 		newUrl := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, blog.Id)
 		log.Printf("Redirected to %s", newUrl)
 		http.Redirect(s.resp, s.req, newUrl, http.StatusMovedPermanently)
@@ -96,7 +96,7 @@ func blogViewRecent(s session, values map[string]string) {
 	if blogs, err := models.BlogGetRecent(showDrafts); err != nil {
 		renderError(s, "Error fetching recent", err)
 	} else {
-		vm := viewModels.FromBlogs(blogs, s.toViewModel())
+		vm := viewModels.FromBlogs(blogs, s.toViewModel(), true)
 		renderTemplate(s, "views/blogList.html", vm)
 	}
 }
@@ -107,7 +107,7 @@ func blogViewAll(s session, values map[string]string) {
 	if blogs, err := models.BlogGetAll(showDrafts); err != nil {
 		renderError(s, "Error fetching all", err)
 	} else {
-		vm := viewModels.FromBlogs(blogs, s.toViewModel())
+		vm := viewModels.FromBlogs(blogs, s.toViewModel(), false)
 		renderTemplate(s, "views/blogList.html", vm)
 	}
 }

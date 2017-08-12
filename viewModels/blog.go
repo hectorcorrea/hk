@@ -1,6 +1,7 @@
 package viewModels
 
 import (
+	"fmt"
 	"hk/models"
 	"html/template"
 	"regexp"
@@ -29,6 +30,8 @@ type Blog struct {
 type BlogList struct {
 	Blogs []Blog
 	Session
+	ShowMoreUrl bool
+	MoreUrl     string
 }
 
 func FromBlog(blog models.Blog, session Session, raw bool) Blog {
@@ -57,7 +60,7 @@ func FromBlog(blog models.Blog, session Session, raw bool) Blog {
 	return vm
 }
 
-func FromBlogs(blogs []models.Blog, session Session) BlogList {
+func FromBlogs(blogs []models.Blog, session Session, showMore bool) BlogList {
 	var list []Blog
 	lastYear := time.Now().Year()
 	for _, blog := range blogs {
@@ -68,7 +71,14 @@ func FromBlogs(blogs []models.Blog, session Session) BlogList {
 		}
 		list = append(list, vm)
 	}
-	return BlogList{Blogs: list, Session: session}
+
+	blogList := BlogList{
+		Blogs:       list,
+		Session:     session,
+		ShowMoreUrl: showMore,
+		MoreUrl:     fmt.Sprintf("/archive#year_%d", time.Now().Year()-2),
+	}
+	return blogList
 }
 
 func addGalleryTags(html string) string {

@@ -22,6 +22,16 @@
   {{ end }}
 </div>
 
+{{ if .ShowMoreUrl }}
+  <!-- more_url = "/archive#year_#{(Time.now.year - 2).to_s}" -->
+  <div class="col-md-4 alert alert-info">
+    <h2>Wanna see more?</h2>
+    <p>
+      <a href="{{ .MoreUrl }}" class="btn btn-primary btn-lg">Click here</a>
+    </p>
+  </div>
+{{ end }}
+
 {{ if .Session.IsAuth }}
   <div class="row">
     <p>
