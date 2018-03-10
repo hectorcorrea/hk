@@ -22,6 +22,7 @@ type Blog struct {
 	CreatedOn   string
 	UpdatedOn   string
 	PostedOn    string
+	Photos      []string
 }
 
 func (b Blog) DebugString() string {
@@ -77,7 +78,26 @@ func (b *Blog) beforeSave() error {
 	}
 	b.BlogDate = b.BlogDate[0:10]
 	b.Year = yearFromDbDate(b.BlogDate)
+	b.Photos = b.getPhotos()
 	return nil
+}
+
+func (b *Blog) getPhotos() []string {
+	// Gets the SRC path from all IMG tags. For example, for
+	// 	<img x=xxx src="http://some/path" y=yyy />
+	// it returns ["http://some/path"]
+	var photos []string
+	reImg := regexp.MustCompile("<img(.*?)>")
+	reSrc := regexp.MustCompile("src=\"(.*?)\"")
+	imgTags := reImg.FindAllString(b.ContentHtml, -1)
+	for _, img := range imgTags {
+		src := reSrc.FindString(img)
+		if src != "" {
+			path := src[5 : len(src)-1]
+			photos = append(photos, path)
+		}
+	}
+	return photos
 }
 
 func yearFromDbDate(dbDate string) int {
@@ -157,6 +177,17 @@ func (b *Blog) Save() error {
 		WHERE id = ?`
 	_, err = db.Exec(sqlUpdate, b.Title, b.Slug, b.ContentHtml,
 		b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, b.Id)
+
+	// delete previous photos attached to this blog
+	sqlDelete := `DELETE FROM blogs_photos WHERE blog_id = ?`
+	_, err = db.Exec(sqlDelete, b.Id)
+
+	// re-add photos
+	for _, path := range b.Photos {
+		sqlInsert := `INSERT INTO blogs_photos(blog_id, path) VALUES(?, ?)`
+		_, err = db.Exec(sqlInsert, b.Id, path)
+	}
+
 	return err
 }
 
