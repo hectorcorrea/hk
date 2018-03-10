@@ -17,6 +17,7 @@ func init() {
 	blogRouter.Add("GET", "/blogs/:title_id", blogViewOneLegacy)
 	blogRouter.Add("GET", "/:year/:title/:id", blogViewOne)
 	blogRouter.Add("GET", "/archive", blogViewAll)
+	blogRouter.Add("GET", "/about", aboutPage)
 	blogRouter.Add("GET", "/", blogViewRecent)
 	blogRouter.Add("POST", "/:year/:title/:id/edit", blogEdit)
 	blogRouter.Add("POST", "/:year/:title/:id/save", blogSave)
@@ -99,6 +100,11 @@ func blogViewRecent(s session, values map[string]string) {
 		vm := viewModels.FromBlogs(blogs, s.toViewModel(), true)
 		renderTemplate(s, "views/blogList.html", vm)
 	}
+}
+
+func aboutPage(s session, values map[string]string) {
+	log.Printf("Loading about page...")
+	renderTemplate(s, "views/about.html", nil)
 }
 
 func blogViewAll(s session, values map[string]string) {
