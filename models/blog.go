@@ -177,18 +177,27 @@ func (b *Blog) Save() error {
 		WHERE id = ?`
 	_, err = db.Exec(sqlUpdate, b.Title, b.Slug, b.ContentHtml,
 		b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, b.Id)
+	if err != nil {
+		return err
+	}
 
 	// delete previous photos attached to this blog
 	sqlDelete := `DELETE FROM blogs_photos WHERE blog_id = ?`
 	_, err = db.Exec(sqlDelete, b.Id)
+	if err != nil {
+		return err
+	}
 
 	// re-add photos
 	for _, path := range b.Photos {
 		sqlInsert := `INSERT INTO blogs_photos(blog_id, path) VALUES(?, ?)`
 		_, err = db.Exec(sqlInsert, b.Id, path)
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	return nil
 }
 
 func getOne(id int64) (Blog, error) {

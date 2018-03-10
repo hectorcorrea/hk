@@ -24,6 +24,7 @@ type Blog struct {
 	IsNewYear bool
 	IsDraft   bool
 	Html      template.HTML
+	Message   string
 	Session
 }
 
@@ -43,6 +44,8 @@ func FromBlog(blog models.Blog, session Session, raw bool) Blog {
 	vm.Url = blog.URL("")
 	if strings.Contains(strings.ToLower(blog.Thumbnail), "_thumb.jpg") {
 		vm.Thumbnail = blog.Thumbnail
+	} else {
+		vm.Message = fmt.Sprintf("Thumbnail ignored because it does not end in _thumb.jpg (%s)", blog.Thumbnail)
 	}
 	if raw {
 		vm.Html = template.HTML(blog.ContentHtml)
@@ -90,6 +93,12 @@ func addGalleryTags(html string) string {
 	return html
 }
 
+// Converts
+//		<img src="somefile_thumb.jpg" alt="y" />
+// into
+// 		<a href="somefile.jpg">
+//			<img="somefile_thumb.jpg" alt="y" />
+// 		</a>
 func wrapImgTag(img string) string {
 	reSrc := regexp.MustCompile("src=\"(.*?)\"")
 	reAlt := regexp.MustCompile("alt=\"(.*?)\"")
