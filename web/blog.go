@@ -16,6 +16,7 @@ var blogRouter Router
 func init() {
 	blogRouter.Add("GET", "/blogs/:title_id", blogViewOneLegacy)
 	blogRouter.Add("GET", "/:year/:title/:id", blogViewOne)
+	blogRouter.Add("GET", "/archive/:year", blogViewYear)
 	blogRouter.Add("GET", "/archive", blogViewAll)
 	blogRouter.Add("GET", "/about", aboutPage)
 	blogRouter.Add("GET", "/", blogViewRecent)
@@ -92,9 +93,9 @@ func blogViewOneLegacy(s session, values map[string]string) {
 }
 
 func blogViewRecent(s session, values map[string]string) {
-	showDrafts := s.isAuth()
+	// showDrafts := s.isAuth()
 	log.Printf("Loading recent...")
-	if blogs, err := models.BlogGetRecent(showDrafts); err != nil {
+	if blogs, err := models.BlogGetRecent(); err != nil {
 		renderError(s, "Error fetching recent", err)
 	} else {
 		vm := viewModels.FromBlogs(blogs, s.toViewModel(), true)
@@ -107,10 +108,26 @@ func aboutPage(s session, values map[string]string) {
 	renderTemplate(s, "views/about.html", nil)
 }
 
+func blogViewYear(s session, values map[string]string) {
+	year, err := strconv.Atoi(values["year"])
+	log.Printf("Loading all for year %d...", year)
+	if err != nil {
+		renderError(s, "Invalid year received", err)
+		return
+	}
+
+	if blogs, err := models.BlogGetYear(year); err != nil {
+		renderError(s, "Error fetching all for year", err)
+	} else {
+		vm := viewModels.FromBlogs(blogs, s.toViewModel(), false)
+		renderTemplate(s, "views/blogList.html", vm)
+	}
+}
+
 func blogViewAll(s session, values map[string]string) {
-	showDrafts := s.isAuth()
+	// showDrafts := s.isAuth()
 	log.Printf("Loading all...")
-	if blogs, err := models.BlogGetAll(showDrafts); err != nil {
+	if blogs, err := models.BlogGetAll(); err != nil {
 		renderError(s, "Error fetching all", err)
 	} else {
 		vm := viewModels.FromBlogs(blogs, s.toViewModel(), false)

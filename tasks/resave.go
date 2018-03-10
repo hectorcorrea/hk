@@ -15,7 +15,7 @@ func ResaveAll() {
 		log.Fatal("Failed to initialize database: ", err)
 	}
 	log.Printf("Database: %s", models.DbConnStringSafe())
-	blogs, _ := models.BlogGetAll(true)
+	blogs, _ := models.BlogGetAll()
 	for _, b := range blogs {
 		log.Printf("re-saving %d - %s", b.Id, b.Title)
 		blog, _ := models.BlogGetById(b.Id)

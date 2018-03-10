@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"regexp"
@@ -46,14 +47,24 @@ func (b Blog) PostedOnRFC1123Z() string {
 	return t.Format(time.RFC1123Z)
 }
 
-func BlogGetAll(showDrafts bool) ([]Blog, error) {
-	blogs, err := getBlogs(showDrafts, 0)
+func BlogGetAll() ([]Blog, error) {
+	blogs, err := getBlogsWhere("")
 	return blogs, err
 }
 
-func BlogGetRecent(showDrafts bool) ([]Blog, error) {
-	year := time.Now().Year() - 1
-	blogs, err := getBlogs(showDrafts, year)
+func BlogGetYear(year int) ([]Blog, error) {
+	if year < 2000 || year > time.Now().Year() {
+		return []Blog{}, errors.New(fmt.Sprintf("Invalid year received (%d)", year))
+	}
+
+	where := fmt.Sprintf("WHERE year = %d", year)
+	blogs, err := getBlogsWhere(where)
+	return blogs, err
+}
+
+func BlogGetRecent() ([]Blog, error) {
+	where := fmt.Sprintf("WHERE year >= %d", time.Now().Year()-1)
+	blogs, err := getBlogsWhere(where)
 	return blogs, err
 }
 
@@ -316,20 +327,17 @@ func getIdBySlug(slug string) (int64, error) {
 	return id, nil
 }
 
-func getBlogs(showDrafts bool, startYear int) ([]Blog, error) {
+func getBlogsWhere(where string) ([]Blog, error) {
 	db, err := connectDB()
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
 
-	// ignore showDrafts
-	sqlSelect := `
-		SELECT id, title, summary, slug, year, postedOn, thumbnail
-		FROM blogs
-		WHERE year >= ?
-		ORDER BY blogDate DESC`
-	rows, err := db.Query(sqlSelect, startYear)
+	sqlSelect := "SELECT id, title, summary, slug, year, postedOn, thumbnail FROM blogs "
+	sqlSelect += where + " "
+	sqlSelect += "ORDER BY blogDate DESC"
+	rows, err := db.Query(sqlSelect)
 	if err != nil {
 		return nil, err
 	}
