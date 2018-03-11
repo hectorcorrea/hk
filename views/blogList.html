@@ -2,28 +2,27 @@
 
 <h1>Welcome to H&amp;K</h1>
 
-<div class="row">
-  {{ range $key, $blog := .Blogs }}
-    {{ if $blog.IsNewYear }}
-      <div class="col-md-4 alert alert-info" id="year_{{ $blog.Year }}">
-        <h2>{{ $blog.Year }} starts here &#8594;</h2>
-        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+{{ range $key, $row := .BlogMatrix }}
+  <div class="row">
+    {{ range $key2, $blog := $row.Blogs }}
+      {{ if $blog.IsNewYear }}
+        <div class="col-md-12" class=" alert alert-info" id="year_{{ $blog.Year }}">
+          <h2 class=" alert alert-info">{{ $blog.Year }} starts here</h2>
+        </div>
+      {{ end }}
+      <div class="col-md-4">
+        <a class="thumbnail" href="{{ $blog.Url }}">
+          <h2>{{ $blog.Title }}</h2>
+          {{ if $blog.Thumbnail }}
+            <img src="{{ $blog.Thumbnail }}">
+          {{ end }}
+        </a>
       </div>
     {{ end }}
-
-    <div class="col-md-4">
-      <a class="thumbnail" href="{{ $blog.Url }}">
-        <h2>{{ $blog.Title }}</h2>
-        {{ if $blog.Thumbnail }}
-          <img src="{{ $blog.Thumbnail }}">
-        {{ end }}
-      </a>
-    </div>
-  {{ end }}
-</div>
+  </div>
+{{ end }}
 
 {{ if .ShowMoreUrl }}
-  <!-- more_url = "/archive#year_#{(Time.now.year - 2).to_s}" -->
   <div class="col-md-4 alert alert-info">
     <h2>Wanna see more?</h2>
     <p>

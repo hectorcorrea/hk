@@ -28,8 +28,12 @@ type Blog struct {
 	Session
 }
 
-type BlogList struct {
+type BlogRow struct {
 	Blogs []Blog
+}
+
+type BlogList struct {
+	BlogMatrix []BlogRow
 	Session
 	ShowMoreUrl bool
 	MoreUrl     string
@@ -64,19 +68,28 @@ func FromBlog(blog models.Blog, session Session, raw bool) Blog {
 }
 
 func FromBlogs(blogs []models.Blog, session Session, showMore bool) BlogList {
-	var list []Blog
-	lastYear := time.Now().Year()
+	matrix := []BlogRow{}
+	r := -1
+	c := -1
+	lastYear := -1
 	for _, blog := range blogs {
 		vm := FromBlog(blog, session, true)
 		if blog.Year != lastYear {
 			vm.IsNewYear = true
 			lastYear = int(blog.Year)
 		}
-		list = append(list, vm)
+		if vm.IsNewYear || c == 3 {
+			// a new row is needed
+			matrix = append(matrix, BlogRow{})
+			r += 1
+			c = 0
+		}
+		matrix[r].Blogs = append(matrix[r].Blogs, vm)
+		c += 1
 	}
 
 	blogList := BlogList{
-		Blogs:       list,
+		BlogMatrix:  matrix,
 		Session:     session,
 		ShowMoreUrl: showMore,
 		MoreUrl:     fmt.Sprintf("/archive#year_%d", time.Now().Year()-2),
