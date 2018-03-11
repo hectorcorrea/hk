@@ -1,6 +1,6 @@
 {{ define "content" }}
 
-<h1>Welcome to H&amp;K</h1>
+<h1>{{ .Title }}</h1>
 
 {{ range $key, $row := .BlogMatrix }}
   <div class="row">

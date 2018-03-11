@@ -1,0 +1,30 @@
+{{ define "content" }}
+
+<h1>{{ .Title }}</h1>
+
+{{ range $key, $row := .BlogMatrix }}
+  <div class="row">
+    {{ range $key2, $blog := $row.Blogs }}
+      <div class="col-md-4">
+        <a class="thumbnail" href="{{ $blog.Url }}">
+          <h2>{{ $blog.Title }}</h2>
+          {{ if $blog.Thumbnail }}
+            <img src="{{ $blog.Thumbnail }}">
+          {{ end }}
+        </a>
+      </div>
+    {{ end }}
+  </div>
+{{ end }}
+
+{{ if .Session.IsAuth }}
+  <div class="row">
+    <p>
+      <form action="/new" method="post">
+        <button class="btn btn-primary" type="submit">New Post</button>
+      </form>
+    </p>
+  </div>
+{{ end }}
+
+{{ end }}

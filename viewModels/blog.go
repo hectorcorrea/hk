@@ -34,6 +34,7 @@ type BlogRow struct {
 
 type BlogList struct {
 	BlogMatrix []BlogRow
+	Title      string
 	Session
 	ShowMoreUrl bool
 	MoreUrl     string
@@ -92,7 +93,8 @@ func FromBlogs(blogs []models.Blog, session Session, showMore bool) BlogList {
 		BlogMatrix:  matrix,
 		Session:     session,
 		ShowMoreUrl: showMore,
-		MoreUrl:     fmt.Sprintf("/archive#year_%d", time.Now().Year()-2),
+		Title:       "",
+		MoreUrl:     fmt.Sprintf("/archive/%d", time.Now().Year()-2),
 	}
 	return blogList
 }

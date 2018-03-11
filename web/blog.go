@@ -99,7 +99,7 @@ func blogViewRecent(s session, values map[string]string) {
 		renderError(s, "Error fetching recent", err)
 	} else {
 		vm := viewModels.FromBlogs(blogs, s.toViewModel(), true)
-		renderTemplate(s, "views/blogList.html", vm)
+		renderTemplate(s, "views/home.html", vm)
 	}
 }
 
@@ -120,7 +120,8 @@ func blogViewYear(s session, values map[string]string) {
 		renderError(s, "Error fetching all for year", err)
 	} else {
 		vm := viewModels.FromBlogs(blogs, s.toViewModel(), false)
-		renderTemplate(s, "views/blogList.html", vm)
+		vm.Title = fmt.Sprintf("Archive for %d", year)
+		renderTemplate(s, "views/archiveYear.html", vm)
 	}
 }
 
@@ -131,7 +132,8 @@ func blogViewAll(s session, values map[string]string) {
 		renderError(s, "Error fetching all", err)
 	} else {
 		vm := viewModels.FromBlogs(blogs, s.toViewModel(), false)
-		renderTemplate(s, "views/blogList.html", vm)
+		vm.Title = "Archive (all years)"
+		renderTemplate(s, "views/archiveAll.html", vm)
 	}
 }
 
