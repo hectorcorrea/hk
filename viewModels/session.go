@@ -6,12 +6,16 @@ type Session struct {
 	Id        string
 	LoginName string
 	IsAuth    bool
+	IsAdmin   bool
+	IsGuest   bool
 }
 
-func NewSession(id, loginName string, isAuth bool) Session {
+func NewSession(id, loginName string, isAdmin bool, isGuest bool) Session {
 	return Session{
 		Id:        id,
 		LoginName: loginName,
-		IsAuth:    isAuth,
+		IsAdmin:   isAdmin,
+		IsGuest:   isGuest,
+		IsAuth:    isGuest || isAdmin,
 	}
 }

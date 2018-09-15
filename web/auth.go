@@ -13,15 +13,16 @@ import (
 
 var authRouter Router
 
-func authPages(resp http.ResponseWriter, req *http.Request) {
-
+func init() {
 	// This should be initialized only once, not on every call.
 	authRouter.Add("GET", "/auth/login", handleLogin)
 	authRouter.Add("POST", "/auth/login", handleLoginPost)
 	authRouter.Add("GET", "/auth/logout", handleLogout)
 	authRouter.Add("GET", "/auth/changepassword", handleChangePass)
 	authRouter.Add("POST", "/auth/changepassword", handleChangePassPost)
+}
 
+func authPages(resp http.ResponseWriter, req *http.Request) {
 	session := newSession(resp, req)
 	found, route := authRouter.FindRoute(req.Method, req.URL.Path)
 	if found {

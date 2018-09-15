@@ -2,6 +2,7 @@ package models
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -22,14 +23,12 @@ func CreateDefaultUser() error {
 	}
 
 	if count == 0 {
-		login := defaultUser()
-		password := defaultPassword()
-		log.Printf(fmt.Sprintf("Creating initial blog user: %s", login))
-		sqlInsert := `INSERT INTO users(login, name, password) VALUES(?, ?, ?)`
-		_, err = db.Exec(sqlInsert, login, login, password)
-		return err
+		err = createDefaultAdmin(db)
+		if err == nil {
+			err = createDefaultGuest(db)
+		}
 	}
-	return nil
+	return err
 }
 
 func SetPassword(login, newPassword string) error {
@@ -44,13 +43,25 @@ func SetPassword(login, newPassword string) error {
 	return err
 }
 
-func defaultUser() string {
-	return env("BLOG_USR", "user1")
+func createDefaultAdmin(db *sql.DB) error {
+	login := env("BLOG_USR", "user1")
+	password := env("BLOG_PASS", "welcome1")
+	log.Printf(fmt.Sprintf("Creating initial admin user: %s", login))
+	return createUser(db, login, password)
 }
 
-func defaultPassword() string {
-	password := env("BLOG_PASS", "welcome1")
-	return hashPassword(password)
+func createDefaultGuest(db *sql.DB) error {
+	login := env("BLOG_GUEST_USR", "user2")
+	password := env("BLOG_GUEST_PASS", "welcome2")
+	log.Printf(fmt.Sprintf("Creating initial guest user: %s", login))
+	return createUser(db, login, password)
+}
+
+func createUser(db *sql.DB, login string, password string) error {
+	hashedPwd := hashPassword(password)
+	sqlInsert := `INSERT INTO users(login, name, password) VALUES(?, ?, ?)`
+	_, err := db.Exec(sqlInsert, login, login, hashedPwd)
+	return err
 }
 
 func hashPassword(password string) string {

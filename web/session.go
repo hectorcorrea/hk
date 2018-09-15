@@ -92,8 +92,19 @@ func (s session) isAuth() bool {
 	return s.loginName != ""
 }
 
+func (s session) isAdmin() bool {
+	return s.isAuth() && !s.isGuest()
+}
+
+func (s session) isGuest() bool {
+	// TODO: use a variable name
+	return s.loginName == "user2"
+}
+
 // Provide toViewModel() here since this type does not have
 // a model per-se.
 func (s session) toViewModel() viewModels.Session {
-	return viewModels.NewSession(s.sessionId, s.loginName, s.isAuth())
+	return viewModels.NewSession(
+		s.sessionId, s.loginName,
+		s.isAdmin(), s.isGuest())
 }
