@@ -33,23 +33,28 @@ func authPages(resp http.ResponseWriter, req *http.Request) {
 }
 
 func handleLogin(s session, values map[string]string) {
+	url := s.req.URL.Query().Get("url")
 	vmSession := s.toViewModel()
-	vm := viewModels.NewLogin("", vmSession)
+	vm := viewModels.NewLogin("", url, vmSession)
 	renderTemplate(s, "views/login.html", vm)
 }
 
 func handleLoginPost(s session, values map[string]string) {
 	login := s.req.FormValue("user")
 	password := s.req.FormValue("password")
+	url := s.req.FormValue("url")
 	err := s.login(login, password)
 	if err != nil {
 		log.Printf("Login FAILED for user: %s", login)
 		vmSession := s.toViewModel()
-		vm := viewModels.NewLogin("Sorry, not sorry", vmSession)
+		vm := viewModels.NewLogin("Sorry, not sorry", url, vmSession)
 		renderTemplate(s, "views/login.html", vm)
 	} else {
-		log.Printf("Login OK for user: %s", login)
-		http.Redirect(s.resp, s.req, "/", 302)
+		if url == "" {
+			url = "/"
+		}
+		log.Printf("Login OK for user: %s (URL: %s)", login, url)
+		http.Redirect(s.resp, s.req, url, 302)
 	}
 }
 

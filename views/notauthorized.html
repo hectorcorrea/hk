@@ -1,0 +1,21 @@
+{{ define "content" }}
+<div class="jumbotron">
+  <div class="container">
+    <h1>Oops!</h1>
+    <div><p>You are not authorized to view this page. But you can login
+      and try again.</p></div>
+    <div><p>
+      <a id="login" class="btn btn-primary btn-lg" href="#" role="button">Login &raquo;</a>
+    </p></div>
+  </div>
+</div>
+{{ end }}
+
+{{ define "javascript_bottom" }}
+<script>
+  $(function() {
+    var target= "{{ .Url }}";
+    $("#login").attr("href", "/auth/login?url=" + target);
+  });
+</script>
+{{ end }}

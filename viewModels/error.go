@@ -1,8 +1,10 @@
 package viewModels
 
 type Error struct {
-	Title   string
-	Details string
+	Title    string
+	Details  string
+	HttpVerb string
+	Url      string
 	Session
 }
 

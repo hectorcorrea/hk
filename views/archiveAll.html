@@ -31,7 +31,7 @@
   </div>
 {{ end }}
 
-{{ if .Session.IsAuth }}
+{{ if .Session.IsAdmin }}
   <div class="row">
     <p>
       <form action="/new" method="post">
@@ -41,4 +41,7 @@
   </div>
 {{ end }}
 
+{{ end }}
+
+{{ define "javascript_bottom" }}
 {{ end }}

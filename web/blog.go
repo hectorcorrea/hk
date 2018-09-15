@@ -30,6 +30,10 @@ func blogPages(resp http.ResponseWriter, req *http.Request) {
 	session := newSession(resp, req)
 	found, route := blogRouter.FindRoute(req.Method, req.URL.Path)
 	if found {
+		if !session.isAuth() {
+			renderNotAuthorized(session)
+			return
+		}
 		values := route.UrlValues(req.URL.Path)
 		route.handler(session, values)
 	} else {

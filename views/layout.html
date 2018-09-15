@@ -71,11 +71,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        {{ if .IsAuth }}
-          <a class="navbar-brand" href="/">Hector y Karla*</a>
-        {{ else }}
-          <a class="navbar-brand" href="/">Hector y Karla</a>
-        {{ end }}
+        <a class="navbar-brand" href="/">Hector y Karla</a>
       </div>
 
       <!-- Collect the nav links, forms, and other content for toggling -->
@@ -135,12 +131,7 @@
   <script src="/public/js/jquery.min.js"></script>
   <script src="/public/js/bootstrap.min.js"></script>
 
-  <!-- Close the menu when clicking on any of the menu options -->
-  <!-- <script type="text/javascript">
-    $('.nav li a').on('click',function(){
-      $('.navbar-collapse').collapse('hide');
-    });
-  </script> -->
+  {{ template "javascript_bottom" . }}
 
   <!-- Track visit with Google Analytics -->
   <script type="text/javascript">

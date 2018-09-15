@@ -68,18 +68,19 @@ func NewUserSession(login string) (UserSession, error) {
 		ExpiresOn: time.Now().UTC().Add(time.Hour * 2),
 	}
 
-	userId, err := GetUserId(login)
+	user, err := GetUserInfo(login)
 	if err != nil {
 		return UserSession{}, err
 	}
 
-	err = cleanSessions(db, userId)
+	singleSessionUser := user.Type != "guest"
+	err = cleanSessions(db, user.Id, singleSessionUser)
 	if err != nil {
 		log.Printf("Error cleaning older sessions for user %s, %s", login, err)
 	}
 
 	sqlInsert := `INSERT INTO sessions(id, userId, expiresOn) VALUES(?, ?, ?)`
-	_, err = db.Exec(sqlInsert, s.SessionId, userId, s.ExpiresOn)
+	_, err = db.Exec(sqlInsert, s.SessionId, user.Id, s.ExpiresOn)
 	if err != nil {
 		log.Printf("Error in SQL INSERT INTO sessions: %s", err)
 	}
@@ -97,17 +98,19 @@ func DeleteUserSession(sessionId string) {
 	_, err = db.Exec(sqlDelete, sessionId)
 }
 
-func cleanSessions(db *sql.DB, userId int64) error {
-	// All sessions for this user (regardless of expiration date)
-	sqlDelete := "DELETE FROM sessions WHERE userId = ?"
-	_, err := db.Exec(sqlDelete, userId)
-	if err != nil {
-		return err
+func cleanSessions(db *sql.DB, userId int64, singleSessionUser bool) error {
+	if singleSessionUser {
+		// All sessions for this user (regardless of expiration date)
+		sqlDelete := "DELETE FROM sessions WHERE userId = ?"
+		_, err := db.Exec(sqlDelete, userId)
+		if err != nil {
+			return err
+		}
 	}
 
 	// All expired sessions (regardless of the user)
-	sqlDelete = "DELETE FROM sessions WHERE expiresOn < utc_timestamp()"
-	_, err = db.Exec(sqlDelete)
+	sqlDelete := "DELETE FROM sessions WHERE expiresOn < utc_timestamp()"
+	_, err := db.Exec(sqlDelete)
 	return err
 }
 

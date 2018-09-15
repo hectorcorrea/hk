@@ -18,7 +18,14 @@
     <input type="password" id="password" name="password" class="form-control" placeholder=""/>
   </div>
 
+  <div class="hidden">
+    <input type="text" id="url" name="url" class="form-control" value="{{ .TargetUrl }}"/>
+  </div>
+
   <button type="submit" class="btn btn-primary">Login</button>
   <p></p>
 </form>
+{{ end }}
+
+{{ define "javascript_bottom" }}
 {{ end }}

@@ -8,6 +8,11 @@ import (
 	"log"
 )
 
+type User struct {
+	Id   int64
+	Type string // guest or admin
+}
+
 func CreateDefaultUser() error {
 	db, err := connectDB()
 	if err != nil {
@@ -47,20 +52,20 @@ func createDefaultAdmin(db *sql.DB) error {
 	login := env("BLOG_USR", "user1")
 	password := env("BLOG_PASS", "welcome1")
 	log.Printf(fmt.Sprintf("Creating initial admin user: %s", login))
-	return createUser(db, login, password)
+	return createUser(db, login, password, "admin")
 }
 
 func createDefaultGuest(db *sql.DB) error {
 	login := env("BLOG_GUEST_USR", "user2")
 	password := env("BLOG_GUEST_PASS", "welcome2")
 	log.Printf(fmt.Sprintf("Creating initial guest user: %s", login))
-	return createUser(db, login, password)
+	return createUser(db, login, password, "guest")
 }
 
-func createUser(db *sql.DB, login string, password string) error {
+func createUser(db *sql.DB, login, password, userType string) error {
 	hashedPwd := hashPassword(password)
-	sqlInsert := `INSERT INTO users(login, name, password) VALUES(?, ?, ?)`
-	_, err := db.Exec(sqlInsert, login, login, hashedPwd)
+	sqlInsert := `INSERT INTO users(login, name, password, type) VALUES(?, ?, ?, ?)`
+	_, err := db.Exec(sqlInsert, login, login, hashedPwd, userType)
 	return err
 }
 
@@ -93,17 +98,25 @@ func LoginUser(login, password string) (bool, error) {
 }
 
 func GetUserId(login string) (int64, error) {
+	user, err := GetUserInfo(login)
+	return user.Id, err
+}
+
+func GetUserInfo(login string) (User, error) {
 	db, err := connectDB()
 	if err != nil {
-		return 0, err
+		return User{}, err
 	}
 	defer db.Close()
 
-	row := db.QueryRow("SELECT id FROM users WHERE login = ?", login)
+	row := db.QueryRow("SELECT id, type FROM users WHERE login = ?", login)
+	var userType sql.NullString
 	var id int64
-	err = row.Scan(&id)
+	err = row.Scan(&id, &userType)
 	if err != nil {
 		log.Printf("Error fetching id for user: %s", login)
 	}
-	return id, err
+
+	user := User{Id: id, Type: stringValue(userType)}
+	return user, err
 }

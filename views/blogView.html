@@ -1,7 +1,7 @@
 {{ define "content" }}
 <h1>{{.Title}}</h1>
 
-{{ if .Session.IsAuth }}
+{{ if .Session.IsAdmin }}
   <form action="{{ .Url }}/edit" method="post">
     <div class="form-group">
       <button type="submit" class="btn btn-primary">Edit</button>
@@ -17,7 +17,7 @@
   <small>Blog posted on: {{ .PostedOn }}</small>
 </p>
 
-{{ if .Session.IsAuth }}
+{{ if .Session.IsAdmin }}
   <p class="text-muted">
     <small>Created on: {{ .CreatedOn }}, Last update: {{ .UpdatedOn }}</small>
   </p>
@@ -54,4 +54,7 @@
 };
 </script>
 
+{{ end }}
+
+{{ define "javascript_bottom" }}
 {{ end }}
