@@ -363,7 +363,7 @@ func getBlogsWhere(where string) ([]Blog, error) {
 			Title:     stringValue(title),
 			Summary:   stringValue(summary),
 			Slug:      stringValue(slug),
-			Thumbnail: stringValue(thumbnail),
+			Thumbnail: newPhotosPath(stringValue(thumbnail)),
 			Year:      intValue(year),
 			PostedOn:  timeValue(postedOn),
 		}
