@@ -1,4 +1,7 @@
 {{ define "content" }}
+<p style="float:right;">
+  <a href="/archive/{{ .Year }}">Back to {{ .Year }}</a>
+</p>
 <h1>{{.Title}}</h1>
 
 {{ if .Session.IsAdmin }}
