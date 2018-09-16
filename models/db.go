@@ -27,7 +27,7 @@ func InitDB() error {
 		database: env("DB_NAME", "hkdb"),
 	}
 	dbSettings.connString = fmt.Sprintf("%s:%s@/%s?parseTime=true", dbSettings.user, dbSettings.password, dbSettings.database)
-	return CreateDefaultUser()
+	return CreateDefaultUsers()
 }
 
 func DbConnStringSafe() string {

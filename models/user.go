@@ -13,7 +13,7 @@ type User struct {
 	Type string // guest or admin
 }
 
-func CreateDefaultUser() error {
+func CreateDefaultUsers() error {
 	db, err := connectDB()
 	if err != nil {
 		return err
@@ -34,6 +34,15 @@ func CreateDefaultUser() error {
 		}
 	}
 	return err
+}
+
+func AddGuestUser(login, password string) error {
+	db, err := connectDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	return createUser(db, login, password, "guest")
 }
 
 func SetPassword(login, newPassword string) error {
