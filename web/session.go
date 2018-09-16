@@ -16,17 +16,20 @@ type session struct {
 	cookie    *http.Cookie
 	loginName string
 	sessionId string
+	userType  string
 }
 
 func newSession(resp http.ResponseWriter, req *http.Request) session {
 	sessionId := ""
 	login := ""
+	userType := ""
 	cookie, err := req.Cookie("sessionId")
 	if err == nil {
 		sessionId = cookie.Value
 		userSession, err := models.GetUserSession(sessionId)
 		if err == nil {
 			login = userSession.Login
+			userType = userSession.UserType
 		} else {
 			log.Printf("Session was not valid (%s), %s", cookie.Value, err)
 			cookie = nil
@@ -40,6 +43,7 @@ func newSession(resp http.ResponseWriter, req *http.Request) session {
 		cookie:    cookie,
 		loginName: login,
 		sessionId: sessionId,
+		userType:  userType,
 	}
 	return s
 }
@@ -93,12 +97,11 @@ func (s session) isAuth() bool {
 }
 
 func (s session) isAdmin() bool {
-	return s.isAuth() && !s.isGuest()
+	return s.userType == "admin"
 }
 
 func (s session) isGuest() bool {
-	// TODO: use a variable name
-	return s.loginName == "user2"
+	return s.userType == "guest"
 }
 
 // Provide toViewModel() here since this type does not have

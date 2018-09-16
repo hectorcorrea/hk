@@ -15,6 +15,7 @@ type UserSession struct {
 	SessionId string
 	ExpiresOn time.Time
 	Login     string
+	UserType  string
 }
 
 func GetUserSession(sessionId string) (UserSession, error) {
@@ -29,21 +30,27 @@ func GetUserSession(sessionId string) (UserSession, error) {
 	defer db.Close()
 
 	sqlSelect := `
-		SELECT expiresOn, users.login
+		SELECT expiresOn, users.login, users.type
 		FROM sessions
 		 	INNER JOIN users ON sessions.userId = users.id
 		WHERE sessions.id = ?`
 	row := db.QueryRow(sqlSelect, sessionId)
 	var expiresOn mysql.NullTime
 	var login sql.NullString
-	err = row.Scan(&expiresOn, &login)
+	var userType sql.NullString
+	err = row.Scan(&expiresOn, &login, &userType)
 	if err != nil {
 		log.Printf("Error on scan: %s", err)
 		return UserSession{}, err
 	}
 
 	if expiresOn.Valid && expiresOn.Time.After(time.Now().UTC()) {
-		s := UserSession{SessionId: sessionId, ExpiresOn: expiresOn.Time, Login: stringValue(login)}
+		s := UserSession{
+			SessionId: sessionId,
+			ExpiresOn: expiresOn.Time,
+			Login:     stringValue(login),
+			UserType:  stringValue(userType),
+		}
 		return s, nil
 	}
 
@@ -62,12 +69,6 @@ func NewUserSession(login string) (UserSession, error) {
 		return UserSession{}, err
 	}
 
-	s := UserSession{
-		SessionId: sessionId,
-		Login:     login,
-		ExpiresOn: time.Now().UTC().Add(time.Hour * 2),
-	}
-
 	user, err := GetUserInfo(login)
 	if err != nil {
 		return UserSession{}, err
@@ -77,6 +78,13 @@ func NewUserSession(login string) (UserSession, error) {
 	err = cleanSessions(db, user.Id, singleSessionUser)
 	if err != nil {
 		log.Printf("Error cleaning older sessions for user %s, %s", login, err)
+	}
+
+	s := UserSession{
+		SessionId: sessionId,
+		Login:     login,
+		ExpiresOn: time.Now().UTC().Add(time.Hour * 2),
+		UserType:  user.Type,
 	}
 
 	sqlInsert := `INSERT INTO sessions(id, userId, expiresOn) VALUES(?, ?, ?)`

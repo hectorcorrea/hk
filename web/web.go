@@ -42,7 +42,6 @@ func cacheResponse(resp http.ResponseWriter) {
 }
 
 func renderNotFound(s session) {
-	// TODO: log more about the Request
 	path := s.req.URL.Path
 	log.Printf(fmt.Sprintf("Not found (%s)", path))
 	t, err := template.New("layout").ParseFiles("views/layout.html", "views/notFound.html")
@@ -80,7 +79,6 @@ func renderError(s session, title string, err error) {
 		return
 	}
 
-	// TODO: log more about the Request
 	log.Printf("ERROR: %s - %s (%s)", title, err, s.req.URL.Path)
 	vm := viewModels.NewError(title, err, s.toViewModel())
 	t, err := template.New("layout").ParseFiles("views/layout.html", "views/error.html")
