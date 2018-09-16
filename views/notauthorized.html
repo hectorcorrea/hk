@@ -2,20 +2,27 @@
 <div class="jumbotron">
   <div class="container">
     <h1>Oops!</h1>
-    <div><p>You are not authorized to view this page. But you can login
-      and try again.</p></div>
-    <div><p>
-      <a id="login" class="btn btn-primary btn-lg" href="#" role="button">Login &raquo;</a>
-    </p></div>
-  </div>
-</div>
+    <div><p>You are not authorized to view this page. Please login.</p></div>
+
+    <form action="/auth/login" method="post">
+      <div class="form-group">
+        <label for="user">Username</label>
+        <input type="text" id="user" name="user" class="form-control" placeholder="e-mail address" autofocus/>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder=""/>
+      </div>
+      <button type="submit" class="btn btn-primary">Login</button>
+
+      <div class="hidden">
+        <input type="text" id="url" name="url" class="form-control" value="{{ .TargetUrl }}"/>
+      </div>
+    </form>
+  </div> <!-- container -->
+</div> <!-- jumbotron -->
 {{ end }}
 
 {{ define "javascript_bottom" }}
-<script>
-  $(function() {
-    var target= "{{ .Url }}";
-    $("#login").attr("href", "/auth/login?url=" + target);
-  });
-</script>
 {{ end }}
