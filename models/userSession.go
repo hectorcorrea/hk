@@ -80,15 +80,19 @@ func NewUserSession(login string) (UserSession, error) {
 		log.Printf("Error cleaning older sessions for user %s, %s", login, err)
 	}
 
+	nextYear := time.Now().UTC().AddDate(1, 0, 0)
 	s := UserSession{
 		SessionId: sessionId,
 		Login:     login,
-		ExpiresOn: time.Now().UTC().Add(time.Hour * 2),
+		ExpiresOn: nextYear,
 		UserType:  user.Type,
 	}
 
-	sqlInsert := `INSERT INTO sessions(id, userId, expiresOn) VALUES(?, ?, ?)`
-	_, err = db.Exec(sqlInsert, s.SessionId, user.Id, s.ExpiresOn)
+	now := time.Now().UTC()
+	sqlInsert := `
+		INSERT INTO sessions(id, userId, expiresOn, lastSeenOn)
+		VALUES(?, ?, ?, ?)`
+	_, err = db.Exec(sqlInsert, s.SessionId, user.Id, s.ExpiresOn, now)
 	if err != nil {
 		log.Printf("Error in SQL INSERT INTO sessions: %s", err)
 	}
@@ -119,6 +123,19 @@ func cleanSessions(db *sql.DB, userId int64, singleSessionUser bool) error {
 	// All expired sessions (regardless of the user)
 	sqlDelete := "DELETE FROM sessions WHERE expiresOn < utc_timestamp()"
 	_, err := db.Exec(sqlDelete)
+	return err
+}
+
+func TouchUserSession(sessionId string) error {
+	db, err := connectDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	now := time.Now().UTC()
+	sqlUpdate := `UPDATE sessions SET lastSeenOn = ? WHERE id = ?`
+	_, err = db.Exec(sqlUpdate, now, sessionId)
 	return err
 }
 

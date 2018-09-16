@@ -30,6 +30,10 @@ func newSession(resp http.ResponseWriter, req *http.Request) session {
 		if err == nil {
 			login = userSession.Login
 			userType = userSession.UserType
+			err = models.TouchUserSession(sessionId)
+			if err != nil {
+				log.Printf("Could not update session %s/%s, %s", sessionId, login, err)
+			}
 		} else {
 			log.Printf("Session was not valid (%s), %s", cookie.Value, err)
 			cookie = nil
