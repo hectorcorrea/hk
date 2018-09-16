@@ -249,8 +249,13 @@ func getOne(id int64) (Blog, error) {
 	blog.ContentHtml = replaceAwsPaths(blog.ContentHtml)
 	blog.ContentHtml = replaceViewPicture(blog.ContentHtml)
 	blog.ContentHtml = replaceThumbnails(blog.ContentHtml)
-
+	blog.ContentHtml = newPhotosPath(blog.ContentHtml)
 	return blog, nil
+}
+
+func newPhotosPath(text string) string {
+	// TODO: make the new path configurable
+	return strings.Replace(text, "/photos/", "/pictrand4/", -1)
 }
 
 func replaceAwsPaths(text string) string {
