@@ -43,7 +43,7 @@ func cacheResponse(resp http.ResponseWriter) {
 
 func renderNotFound(s session) {
 	path := s.req.URL.Path
-	log.Printf(fmt.Sprintf("Not found (%s)", path))
+	log.Printf(fmt.Sprintf("Not found (%s) (%s)", path, s.loginName))
 	t, err := template.New("layout").ParseFiles("views/layout.html", "views/notFound.html")
 	if err != nil {
 		log.Printf("Error rendering not found page :(")
@@ -55,9 +55,8 @@ func renderNotFound(s session) {
 }
 
 func renderNotAuthorized(s session) {
-	title := "Not authorized"
-	log.Printf(fmt.Sprintf("%s: %s %s", title, s.req.Method, s.req.URL.Path))
-	vm := viewModels.NewErrorFromStr(title, "", s.toViewModel())
+	log.Printf(fmt.Sprintf("%s: %s %s (%s)", "Not authorized", s.req.Method, s.req.URL.Path, s.loginName))
+	vm := viewModels.NewErrorFromStr("Not authorized", "", s.toViewModel())
 	vm.HttpVerb = s.req.Method
 	vm.Url = s.req.URL.Path
 	t, err := template.New("layout").ParseFiles("views/layout.html", "views/notauthorized.html")
@@ -79,7 +78,7 @@ func renderError(s session, title string, err error) {
 		return
 	}
 
-	log.Printf("ERROR: %s - %s (%s)", title, err, s.req.URL.Path)
+	log.Printf("ERROR: %s - %s (%s) (%s)", title, err, s.req.URL.Path, s.loginName)
 	vm := viewModels.NewError(title, err, s.toViewModel())
 	t, err := template.New("layout").ParseFiles("views/layout.html", "views/error.html")
 	if err != nil {
@@ -97,7 +96,7 @@ func loadTemplate(s session, viewName string) (*template.Template, error) {
 		renderError(s, fmt.Sprintf("Loading view %s", viewName), err)
 		return nil, err
 	} else {
-		log.Printf("Loaded template %s (%s)", viewName, s.req.URL.Path)
+		log.Printf("Loaded template %s (%s) (%s)", viewName, s.req.URL.Path, s.loginName)
 		return t, nil
 	}
 }
