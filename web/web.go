@@ -3,13 +3,13 @@ package web
 import (
 	"database/sql"
 	"fmt"
+	"hk/models"
+	"hk/viewModels"
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
-
-	"hk/models"
-	"hk/viewModels"
 )
 
 func StartWebServer(address string) {
@@ -59,7 +59,14 @@ func renderNotAuthorized(s session) {
 	vm := viewModels.NewErrorFromStr("Not authorized", "", s.toViewModel())
 	vm.HttpVerb = s.req.Method
 	vm.TargetUrl = s.req.URL.Path
-	t, err := template.New("layout").ParseFiles("views/layout.html", "views/notauthorized.html")
+
+	viewName := "views/notauthorized.html"
+	if reqLanguage(s.req) == "es" {
+		viewName = "views/notauthorized_es.html"
+		log.Printf("Rendered login in Spanish")
+	}
+
+	t, err := template.New("layout").ParseFiles("views/layout.html", viewName)
 	if err != nil {
 		log.Printf("Error rendering not authorized page :(")
 		// perhaps render a hard coded string?
@@ -111,4 +118,15 @@ func renderTemplate(s session, viewName string, viewModel interface{}) {
 			log.Printf("Error rendering: %s, %s ", viewName, err)
 		}
 	}
+}
+
+func reqLanguage(req *http.Request) string {
+	for _, headerLang := range req.Header["Accept-Language"] {
+		for _, lang := range headerLang {
+			if strings.Contains(string(lang), "es-") {
+				return "es"
+			}
+		}
+	}
+	return "en"
 }
