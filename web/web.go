@@ -121,11 +121,9 @@ func renderTemplate(s session, viewName string, viewModel interface{}) {
 }
 
 func reqLanguage(req *http.Request) string {
-	for _, headerLang := range req.Header["Accept-Language"] {
-		for _, lang := range headerLang {
-			if strings.Contains(string(lang), "es-") {
-				return "es"
-			}
+	for _, lang := range req.Header["Accept-Language"] {
+		if strings.Contains(string(lang), "es-") {
+			return "es"
 		}
 	}
 	return "en"
