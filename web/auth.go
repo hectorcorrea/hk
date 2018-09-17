@@ -2,13 +2,13 @@ package web
 
 import (
 	"fmt"
+	"hk/models"
+	"hk/viewModels"
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
-
-	"hk/models"
-	"hk/viewModels"
 )
 
 var authRouter Router
@@ -40,8 +40,8 @@ func handleLogin(s session, values map[string]string) {
 }
 
 func handleLoginPost(s session, values map[string]string) {
-	login := s.req.FormValue("user")
-	password := s.req.FormValue("password")
+	login := strings.TrimSpace(s.req.FormValue("user"))
+	password := strings.TrimSpace(s.req.FormValue("password"))
 	url := s.req.FormValue("url")
 	err := s.login(login, password)
 	if err != nil {
