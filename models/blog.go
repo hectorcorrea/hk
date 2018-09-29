@@ -255,6 +255,8 @@ func getOne(id int64) (Blog, error) {
 	blog.ContentHtml = replaceAwsPaths(blog.ContentHtml)
 	blog.ContentHtml = replaceViewPicture(blog.ContentHtml)
 	blog.ContentHtml = replaceThumbnails(blog.ContentHtml)
+	// TODO: I should only change this part of the content
+	// for VIEWING purposes, not for EDIT purposes.
 	blog.ContentHtml = replacePhotoPath(blog.ContentHtml)
 	return blog, nil
 }
