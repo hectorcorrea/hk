@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
