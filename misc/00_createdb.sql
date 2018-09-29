@@ -67,3 +67,7 @@ CREATE INDEX blogs_photos_index_blog_id ON blogs_photos(blog_id);
 /*
 CREATE INDEX blogs_photos_index_path ON blogs_photos(path);
 */
+
+CREATE TABLE settings (
+  photoPath VARCHAR(255) NOT NULL
+);

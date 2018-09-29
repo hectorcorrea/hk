@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -25,6 +26,8 @@ type Blog struct {
 	PostedOn    string
 	Photos      []string
 }
+
+var photoPath = "UNSET"
 
 func (b Blog) DebugString() string {
 	str := fmt.Sprintf("Id: %d\nTitle: %s\nSummary: %s\n",
@@ -91,6 +94,10 @@ func (b *Blog) beforeSave() error {
 	b.Year = yearFromDbDate(b.BlogDate)
 	b.Photos = b.getPhotos()
 	return nil
+}
+
+func (b *Blog) AddPhoto(photoName string) {
+	b.ContentHtml += fmt.Sprintf("<img src=\"%s\" />", photoName)
 }
 
 func (b *Blog) getPhotos() []string {
@@ -249,13 +256,44 @@ func getOne(id int64) (Blog, error) {
 	blog.ContentHtml = replaceAwsPaths(blog.ContentHtml)
 	blog.ContentHtml = replaceViewPicture(blog.ContentHtml)
 	blog.ContentHtml = replaceThumbnails(blog.ContentHtml)
-	blog.ContentHtml = newPhotosPath(blog.ContentHtml)
+	blog.ContentHtml = replacePhotoPath(blog.ContentHtml)
 	return blog, nil
 }
 
-func newPhotosPath(text string) string {
-	// TODO: make the new path configurable
-	return strings.Replace(text, "/photos/", "/pictrand4/", -1)
+func getPhotoPath() (string, error) {
+	if photoPath != "UNSET" {
+		return photoPath, nil
+	}
+
+	// Fetch if from the database...
+	db, err := connectDB()
+	if err != nil {
+		// Bail out but don't cache a value for it, so it will be retried
+		// in the next call to getPhotoPath()
+		return "", err
+	}
+	defer db.Close()
+
+	var path sql.NullString
+	sqlSelect := "SELECT photoPath FROM settings LIMIT 1;"
+	row := db.QueryRow(sqlSelect)
+	err = row.Scan(&path)
+	if err != nil {
+		photoPath = "" // cache a value to prevent retries
+		return photoPath, err
+	}
+
+	// ...and cache it
+	photoPath = stringValue(path)
+	return photoPath, nil
+}
+
+func replacePhotoPath(text string) string {
+	path, err := getPhotoPath()
+	if err != nil {
+		return text
+	}
+	return strings.Replace(text, "/photos/", "/"+path+"/", -1)
 }
 
 func replaceAwsPaths(text string) string {
@@ -363,7 +401,7 @@ func getBlogsWhere(where string) ([]Blog, error) {
 			Title:     stringValue(title),
 			Summary:   stringValue(summary),
 			Slug:      stringValue(slug),
-			Thumbnail: newPhotosPath(stringValue(thumbnail)),
+			Thumbnail: replacePhotoPath(stringValue(thumbnail)),
 			Year:      intValue(year),
 			PostedOn:  timeValue(postedOn),
 		}
