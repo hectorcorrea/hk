@@ -250,11 +250,7 @@ func getOne(id int64) (Blog, error) {
 	blog.CreatedOn = timeValue(createdOn)
 	blog.UpdatedOn = timeValue(updatedOn)
 	blog.PostedOn = timeValue(postedOn)
-
 	blog.ContentHtml = stringValue(content)
-	blog.ContentHtml = replaceAwsPaths(blog.ContentHtml)
-	blog.ContentHtml = replaceViewPicture(blog.ContentHtml)
-	blog.ContentHtml = replaceThumbnails(blog.ContentHtml)
 	return blog, nil
 }
 
@@ -292,64 +288,6 @@ func MaskPhotoPaths(text string) string {
 		return text
 	}
 	return strings.Replace(text, "/photos/", "/"+path+"/", -1)
-}
-
-func replaceAwsPaths(text string) string {
-	aws_path := "https://s3-us-west-2.amazonaws.com/hectorykarla/"
-	new_path := "http://www.hectorykarla.com/photos/"
-	return strings.Replace(text, aws_path, new_path, -1)
-}
-
-// Some old posts have a fake HTML tag <thumbnail=pictures/year/name.jpg>
-// to handle thumbnails. Here we replace those with normal IMG tags.
-func replaceThumbnails(text string) string {
-	reThumbnails := regexp.MustCompile("<thumbnail=(.*?)>")
-	thumbnails := reThumbnails.FindAllString(text, -1)
-	for _, thumbnail := range thumbnails {
-		img := strings.Replace(thumbnail, "<thumbnail=pictures/", "", 1)
-		img = strings.Replace(img, ">", "", 1)
-		if strings.Index(img, ".jpg") != -1 {
-			img = strings.Replace(img, ".jpg", "_thumb.jpg", 1)
-		}
-		img = "<img src=\"http://www.hectorykarla.com/photos/" + img + "\" />"
-		text = strings.Replace(text, thumbnail, img, 1)
-	}
-	return text
-}
-
-// Some old post have embedded JavaScript that I used many years ago
-// to render the image pop-up box. In this function we get rid of the
-// JavaScript from the text so that we render the plain IMG tag (the
-// JavaScript on the page will handle the pop-up.)
-//
-// For example a link like this:
-//
-// 		<a href=javascript:viewpicture(...)><img src=yyy /></a>
-//
-// is replaced with:
-//
-// 		<img src=yyy />
-//
-func replaceViewPicture(text string) string {
-	reLinks := regexp.MustCompile("<a href=(.*?)>(.*?)</a>")
-	links := reLinks.FindAllString(text, -1)
-	for _, link := range links {
-		viewPicture := strings.Index(link, "javascript:viewpicture")
-		if viewPicture != -1 {
-			imgBegin := strings.Index(link, "<img")
-			if imgBegin > viewPicture {
-				imgEnd := strings.Index(link[imgBegin:], "/>")
-				if imgEnd != -1 {
-					// extract the <img ... /> from the match
-					// and replace the link with viewPicture with
-					// the plain img tag
-					img := link[imgBegin:(imgBegin + imgEnd + 2)]
-					text = strings.Replace(text, link, img, 1)
-				}
-			}
-		}
-	}
-	return text
 }
 
 func getIdBySlug(slug string) (int64, error) {
