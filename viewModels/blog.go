@@ -130,7 +130,7 @@ func wrapImgTag(img string) string {
 	file := strings.Replace(srcValue, "_thumb.jpg", ".jpg", 1)
 	newImg := "<img src=\"" + srcValue + "\" " + alt + " />"
 
-	newTag := "<a href=\"" + file + "\" >\r\n"
+	newTag := "<a class=\"imgLink\" href=\"" + file + "\" >\r\n"
 	newTag += "  " + newImg + "\r\n"
 	newTag += "</a>\r\n"
 	return newTag

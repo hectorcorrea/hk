@@ -45,19 +45,18 @@
 
 <!-- Image gallery (lightbox) from: https://github.com/blueimp/Gallery -->
 <script src="/public/js/blueimp-gallery.min.js"></script>
-
-<script type="text/javascript">
-  document.getElementById('links').onclick = function (event) {
-      event = event || window.event;
-      var target = event.target || event.srcElement,
-          link = target.src ? target.parentNode : target,
-          options = {index: link, event: event},
-          links = this.getElementsByTagName('a');
-      blueimp.Gallery(links, options);
-};
-</script>
-
 {{ end }}
 
 {{ define "javascript_bottom" }}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('.imgLink').click(function(event) {
+      var target = event.target;
+      var link = target.src ? target.parentNode : target;
+      var options = {index: link, event: event};
+      var links = $('.imgLink');
+      blueimp.Gallery(links, options);
+    });
+  });
+</script>
 {{ end }}
