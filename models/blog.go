@@ -255,13 +255,10 @@ func getOne(id int64) (Blog, error) {
 	blog.ContentHtml = replaceAwsPaths(blog.ContentHtml)
 	blog.ContentHtml = replaceViewPicture(blog.ContentHtml)
 	blog.ContentHtml = replaceThumbnails(blog.ContentHtml)
-	// TODO: I should only change this part of the content
-	// for VIEWING purposes, not for EDIT purposes.
-	blog.ContentHtml = replacePhotoPath(blog.ContentHtml)
 	return blog, nil
 }
 
-func getPhotoPath() (string, error) {
+func PhotoPath() (string, error) {
 	if photoPath != "UNSET" {
 		return photoPath, nil
 	}
@@ -289,8 +286,8 @@ func getPhotoPath() (string, error) {
 	return photoPath, nil
 }
 
-func replacePhotoPath(text string) string {
-	path, err := getPhotoPath()
+func MaskPhotoPaths(text string) string {
+	path, err := PhotoPath()
 	if err != nil {
 		return text
 	}
@@ -402,7 +399,7 @@ func getBlogsWhere(where string) ([]Blog, error) {
 			Title:     stringValue(title),
 			Summary:   stringValue(summary),
 			Slug:      stringValue(slug),
-			Thumbnail: replacePhotoPath(stringValue(thumbnail)),
+			Thumbnail: stringValue(thumbnail),
 			Year:      intValue(year),
 			PostedOn:  timeValue(postedOn),
 		}

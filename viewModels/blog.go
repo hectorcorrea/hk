@@ -47,16 +47,23 @@ func FromBlog(blog models.Blog, session Session, raw bool) Blog {
 	vm.Summary = blog.Summary
 	vm.Slug = blog.Slug
 	vm.Url = blog.URL("")
+
 	if strings.Contains(strings.ToLower(blog.Thumbnail), "_thumb.jpg") {
 		vm.Thumbnail = blog.Thumbnail
 	} else {
 		vm.Message = fmt.Sprintf("Thumbnail ignored because it does not end in _thumb.jpg (%s)", blog.Thumbnail)
 	}
+
 	if raw {
+		// For editing we show the data as-is (no masking)
 		vm.Html = template.HTML(blog.ContentHtml)
 	} else {
-		vm.Html = template.HTML(addGalleryTags(blog.ContentHtml))
+		// For viewing we mask the path to the photos
+		vm.Thumbnail = models.MaskPhotoPaths(blog.Thumbnail)
+		html := models.MaskPhotoPaths(blog.ContentHtml)
+		vm.Html = template.HTML(addGalleryTags(html))
 	}
+
 	vm.CreatedOn = blog.CreatedOn
 	vm.PostedOn = blog.PostedOn
 	vm.UpdatedOn = blog.UpdatedOn
@@ -74,7 +81,7 @@ func FromBlogs(blogs []models.Blog, session Session, showMore bool) BlogList {
 	c := -1
 	lastYear := -1
 	for _, blog := range blogs {
-		vm := FromBlog(blog, session, true)
+		vm := FromBlog(blog, session, false)
 		if blog.Year != lastYear {
 			vm.IsNewYear = true
 			lastYear = int(blog.Year)
