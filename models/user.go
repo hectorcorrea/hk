@@ -106,6 +106,25 @@ func LoginUser(login, password string) (bool, error) {
 	return true, nil
 }
 
+func LoginTicket(login string) (bool, error) {
+	db, err := connectDB()
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+
+	row := db.QueryRow("SELECT id FROM users WHERE login = ?", login)
+	var id int64
+	err = row.Scan(&id)
+	if err != nil {
+		log.Printf("Ticket not found in database: %s", login)
+		return false, err
+	} else if id == 0 {
+		return false, errors.New("User ID was zero")
+	}
+	return true, nil
+}
+
 func GetUserId(login string) (int64, error) {
 	user, err := GetUserInfo(login)
 	return user.Id, err

@@ -74,7 +74,7 @@ func NewUserSession(login string) (UserSession, error) {
 		return UserSession{}, err
 	}
 
-	singleSessionUser := user.Type != "guest"
+	singleSessionUser := (user.Type == "admin")
 	err = cleanSessions(db, user.Id, singleSessionUser)
 	if err != nil {
 		log.Printf("Error cleaning older sessions for user %s, %s", login, err)
