@@ -45,6 +45,15 @@ func GetUserSession(sessionId string) (UserSession, error) {
 	}
 
 	if expiresOn.Valid && expiresOn.Time.After(time.Now().UTC()) {
+
+		// Mark last time session has been used.
+		now := time.Now().UTC()
+		sqlUpdate := `UPDATE sessions SET lastSeenOn = ? WHERE id = ?`
+		_, err = db.Exec(sqlUpdate, now, sessionId)
+		if err != nil {
+			log.Printf("Could not update session last seen on: %s", err)
+		}
+
 		s := UserSession{
 			SessionId: sessionId,
 			ExpiresOn: expiresOn.Time,
@@ -123,19 +132,6 @@ func cleanSessions(db *sql.DB, userId int64, singleSessionUser bool) error {
 	// All expired sessions (regardless of the user)
 	sqlDelete := "DELETE FROM sessions WHERE expiresOn < utc_timestamp()"
 	_, err := db.Exec(sqlDelete)
-	return err
-}
-
-func TouchUserSession(sessionId string) error {
-	db, err := connectDB()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	now := time.Now().UTC()
-	sqlUpdate := `UPDATE sessions SET lastSeenOn = ? WHERE id = ?`
-	_, err = db.Exec(sqlUpdate, now, sessionId)
 	return err
 }
 

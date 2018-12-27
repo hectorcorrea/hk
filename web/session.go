@@ -22,43 +22,52 @@ type session struct {
 func newSession(resp http.ResponseWriter, req *http.Request) session {
 	cookie, err := req.Cookie("sessionId")
 	if err == nil {
-		// Known user with an existing session.
-		sessionId := cookie.Value
-		userSession, err := models.GetUserSession(sessionId)
-		if err != nil {
-			log.Printf("Session was not valid (%s), %s", cookie.Value, err)
-			return session{resp: resp, req: req}
+		sessionID := cookie.Value
+		userSession, err := models.GetUserSession(sessionID)
+		if err == nil {
+			// Known user with a valid sessionID.
+			return session{
+				resp:      resp,
+				req:       req,
+				cookie:    cookie,
+				loginName: userSession.Login,
+				sessionId: cookie.Value,
+				userType:  userSession.UserType,
+			}
 		}
-
-		err = models.TouchUserSession(sessionId)
-		if err != nil {
-			log.Printf("Could not update session %s/%s, %s", sessionId, userSession.Login, err)
-		}
-		return session{
-			resp:      resp,
-			req:       req,
-			cookie:    cookie,
-			loginName: userSession.Login,
-			sessionId: cookie.Value,
-			userType:  userSession.UserType,
-		}
+		log.Printf("SessionId was not valid (%s) %s", sessionID, err)
 	}
 
-	ticketID := req.URL.Query().Get("ticketId")
-	if ticketID != "" {
-		// Unknown user, but link has a ticket ID
-		s := session{
-			resp:     resp,
-			req:      req,
-			userType: "guest",
-		}
-		err = s.loginTicket(ticketID)
+	cookie, err = req.Cookie("ticketId")
+	if err == nil {
+		ticketID := cookie.Value
+		userSession, err := models.GetUserSession(ticketID)
 		if err == nil {
+			// Known user with a valid ticketID.
+			return session{
+				resp:      resp,
+				req:       req,
+				cookie:    cookie,
+				loginName: userSession.Login,
+				sessionId: cookie.Value,
+				userType:  userSession.UserType,
+			}
+		}
+		log.Printf("TicketId was not valid (%s) %s", ticketID, err)
+	}
+
+	ticket := req.URL.Query().Get("ticket")
+	if ticket != "" {
+		s := session{resp: resp, req: req, userType: "guest"}
+		err := s.loginTicket(ticket)
+		if err == nil {
+			// User has a valid ticket in the URL.
 			return s
 		}
-		log.Printf("Ticket was not valid (%s) %s", ticketID, err)
+		log.Printf("Ticket was not valid (%s) %s", ticket, err)
 	}
 
+	// Anonymous user
 	return session{resp: resp, req: req}
 }
 
@@ -108,7 +117,7 @@ func (s *session) login(loginName, password string) error {
 
 func (s *session) loginTicket(ticketID string) error {
 	if s.cookie == nil {
-		s.cookie = &http.Cookie{Name: "sessionId"}
+		s.cookie = &http.Cookie{Name: "ticketId"}
 	}
 
 	// Tickets are password-less users with a very short lifespan.
