@@ -67,45 +67,11 @@ func GetUserSession(sessionId string) (UserSession, error) {
 }
 
 func NewUserSession(login string) (UserSession, error) {
-	db, err := connectDB()
-	if err != nil {
-		return UserSession{}, err
-	}
-	defer db.Close()
+	return newSession(login, 365)
+}
 
-	sessionId, err := newId()
-	if err != nil {
-		return UserSession{}, err
-	}
-
-	user, err := GetUserInfo(login)
-	if err != nil {
-		return UserSession{}, err
-	}
-
-	singleSessionUser := (user.Type == "admin")
-	err = cleanSessions(db, user.Id, singleSessionUser)
-	if err != nil {
-		log.Printf("Error cleaning older sessions for user %s, %s", login, err)
-	}
-
-	nextYear := time.Now().UTC().AddDate(1, 0, 0)
-	s := UserSession{
-		SessionId: sessionId,
-		Login:     login,
-		ExpiresOn: nextYear,
-		UserType:  user.Type,
-	}
-
-	now := time.Now().UTC()
-	sqlInsert := `
-		INSERT INTO sessions(id, userId, expiresOn, lastSeenOn)
-		VALUES(?, ?, ?, ?)`
-	_, err = db.Exec(sqlInsert, s.SessionId, user.Id, s.ExpiresOn, now)
-	if err != nil {
-		log.Printf("Error in SQL INSERT INTO sessions: %s", err)
-	}
-	return s, err
+func NewTicketSession(login string) (UserSession, error) {
+	return newSession(login, 60)
 }
 
 func DeleteUserSession(sessionId string) {
@@ -144,4 +110,45 @@ func newId() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(rb), nil
+}
+
+func newSession(login string, days int) (UserSession, error) {
+	db, err := connectDB()
+	if err != nil {
+		return UserSession{}, err
+	}
+	defer db.Close()
+
+	sessionId, err := newId()
+	if err != nil {
+		return UserSession{}, err
+	}
+
+	user, err := GetUserInfo(login)
+	if err != nil {
+		return UserSession{}, err
+	}
+
+	singleSessionUser := (user.Type == "admin")
+	err = cleanSessions(db, user.Id, singleSessionUser)
+	if err != nil {
+		log.Printf("Error cleaning older sessions for user %s, %s", login, err)
+	}
+
+	s := UserSession{
+		SessionId: sessionId,
+		Login:     login,
+		ExpiresOn: time.Now().UTC().AddDate(0, 0, days),
+		UserType:  user.Type,
+	}
+
+	now := time.Now().UTC()
+	sqlInsert := `
+		INSERT INTO sessions(id, userId, expiresOn, lastSeenOn)
+		VALUES(?, ?, ?, ?)`
+	_, err = db.Exec(sqlInsert, s.SessionId, user.Id, s.ExpiresOn, now)
+	if err != nil {
+		log.Printf("Error in SQL INSERT INTO sessions: %s", err)
+	}
+	return s, err
 }

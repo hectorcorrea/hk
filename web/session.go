@@ -85,10 +85,6 @@ func (s *session) logout() {
 }
 
 func (s *session) login(loginName, password string) error {
-	if s.cookie == nil {
-		s.cookie = &http.Cookie{Name: "sessionId"}
-	}
-
 	logged, err := models.LoginUser(loginName, password)
 	if err != nil {
 		return err
@@ -103,6 +99,7 @@ func (s *session) login(loginName, password string) error {
 
 		s.loginName = userSession.Login
 		s.sessionId = userSession.SessionId
+		s.cookie = &http.Cookie{Name: "sessionId"}
 		s.cookie.Value = s.sessionId
 		s.cookie.Expires = userSession.ExpiresOn
 		s.cookie.Path = "/"
@@ -116,10 +113,6 @@ func (s *session) login(loginName, password string) error {
 }
 
 func (s *session) loginTicket(ticketID string) error {
-	if s.cookie == nil {
-		s.cookie = &http.Cookie{Name: "ticketId"}
-	}
-
 	// Tickets are password-less users with a very short lifespan.
 	logged, err := models.LoginTicket(ticketID)
 	if err != nil {
@@ -127,7 +120,7 @@ func (s *session) loginTicket(ticketID string) error {
 	}
 
 	if logged {
-		userSession, err := models.NewUserSession(ticketID)
+		userSession, err := models.NewTicketSession(ticketID)
 		if err != nil {
 			log.Printf("ERROR creating new ticket session: %s", err)
 			return err
@@ -135,6 +128,7 @@ func (s *session) loginTicket(ticketID string) error {
 
 		s.loginName = userSession.Login
 		s.sessionId = userSession.SessionId
+		s.cookie = &http.Cookie{Name: "ticketId"}
 		s.cookie.Value = s.sessionId
 		s.cookie.Expires = userSession.ExpiresOn
 		s.cookie.Path = "/"
