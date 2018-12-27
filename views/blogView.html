@@ -3,6 +3,9 @@
   <a href="/archive/{{ .Year }}">Back to {{ .Year }}</a>
 </p>
 <h1>{{.Title}}</h1>
+<p class="text-muted">
+  <small>{{ .BlogDate }}</small>
+</p>
 
 {{ if .Session.IsAdmin }}
   <form action="{{ .Url }}/edit" method="post">
@@ -15,10 +18,6 @@
 <div id="links">
   {{.Html}}
 </div>
-
-<p class="text-muted">
-  <small>Blog posted on: {{ .PostedOn }}</small>
-</p>
 
 {{ if .Session.IsAdmin }}
   <p class="text-muted">
