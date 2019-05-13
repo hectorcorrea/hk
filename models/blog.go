@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 type Blog struct {
@@ -86,6 +87,9 @@ func BlogGetBySlug(slug string) (Blog, error) {
 func (b *Blog) beforeSave() error {
 	b.Slug = getSlug(b.Title)
 	b.UpdatedOn = dbUtcNow()
+	b.Thumbnail = strings.Replace(b.Thumbnail, "http://", "https://", -1)
+	b.ContentHtml = strings.Replace(b.ContentHtml, "http://www.hectorykarla.com", "https://www.hectorykarla.com", -1)
+	b.ContentHtml = strings.Replace(b.ContentHtml, "http://hectorykarla.com", "https://hectorykarla.com", -1)
 	if b.BlogDate == "" {
 		b.BlogDate = b.UpdatedOn
 	}
