@@ -14,6 +14,7 @@ import (
 var blogRouter Router
 
 func init() {
+	blogRouter.Add("GET", "/shared/:alias", blogViewOneShared)
 	blogRouter.Add("GET", "/blogs/:title_id", blogViewOneLegacy)
 	blogRouter.Add("GET", "/:year/:title/:id", blogViewOne)
 	blogRouter.Add("GET", "/archive/:year", blogViewYear)
@@ -30,9 +31,13 @@ func blogPages(resp http.ResponseWriter, req *http.Request) {
 	session := newSession(resp, req)
 	found, route := blogRouter.FindRoute(req.Method, req.URL.Path)
 	if found {
-		if !session.isAuth() {
-			renderNotAuthorized(session)
-			return
+		if route.path == "/shared/:alias" {
+			// anonymous users are OK
+		} else {
+			if !session.isAuth() {
+				renderNotAuthorized(session)
+				return
+			}
 		}
 		values := route.UrlValues(req.URL.Path)
 		route.handler(session, values)
@@ -63,13 +68,35 @@ func blogViewOne(s session, values map[string]string) {
 	year := values["year"]
 	slug := values["title"]
 	if (year != strconv.Itoa(blog.Year)) || (slug != blog.Slug) {
-		newUrl := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, blog.Id)
-		log.Printf("Redirected to %s", newUrl)
-		http.Redirect(s.resp, s.req, newUrl, http.StatusMovedPermanently)
+		newURL := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, blog.Id)
+		log.Printf("Redirected to %s", newURL)
+		http.Redirect(s.resp, s.req, newURL, http.StatusMovedPermanently)
 		return
 	}
 
 	log.Print("blogViewOne")
+	vm := viewModels.FromBlog(blog, s.toViewModel(), false)
+	renderTemplate(s, "views/blogView.html", vm)
+}
+
+func blogViewOneShared(s session, values map[string]string) {
+	log.Print("blogViewOneShared")
+
+	alias := values["alias"]
+	if alias == "" {
+		log.Print("blogViewOneShared - missing alias")
+		renderError(s, "No alias was received", nil)
+		return
+	}
+
+	log.Printf("Loading alias %s", alias)
+	blog, err := models.BlogGetByAlias(alias)
+	if err != nil {
+		renderError(s, "Fetching by alias", err)
+		return
+	}
+
+	log.Printf("blogViewOneShared %s", alias)
 	vm := viewModels.FromBlog(blog, s.toViewModel(), false)
 	renderTemplate(s, "views/blogView.html", vm)
 }
@@ -220,5 +247,6 @@ func blogFromForm(id int64, s session) models.Blog {
 	blog.ContentHtml = s.req.FormValue("content")
 	blog.Thumbnail = s.req.FormValue("thumbnail")
 	blog.BlogDate = s.req.FormValue("blogdate")
+	blog.ShareAlias = s.req.FormValue("shareAlias")
 	return blog
 }

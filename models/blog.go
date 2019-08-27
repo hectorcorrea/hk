@@ -20,6 +20,7 @@ type Blog struct {
 	BlogDate    string
 	Year        int
 	Thumbnail   string
+	ShareAlias  string
 	ContentHtml string
 	CreatedOn   string
 	UpdatedOn   string
@@ -78,6 +79,14 @@ func BlogGetById(id int64) (Blog, error) {
 
 func BlogGetBySlug(slug string) (Blog, error) {
 	id, err := getIdBySlug(slug)
+	if err != nil {
+		return Blog{}, err
+	}
+	return getOne(id)
+}
+
+func BlogGetByAlias(alias string) (Blog, error) {
+	id, err := getIdByAlias(alias)
 	if err != nil {
 		return Blog{}, err
 	}
@@ -190,14 +199,19 @@ func (b *Blog) Save() error {
 	defer db.Close()
 	b.beforeSave()
 
+	shareAlias := sql.NullString{String: "", Valid: false}
+	if b.ShareAlias != "" {
+		shareAlias = sql.NullString{String: b.ShareAlias, Valid: true}
+	}
+
 	sqlUpdate := `
 		UPDATE blogs
 		SET title = ?, slug = ?, content = ?,
 			blogDate = ?, year = ?, updatedOn = ?,
-			thumbnail = ?
+			thumbnail = ?, shareAlias = ?
 		WHERE id = ?`
 	_, err = db.Exec(sqlUpdate, b.Title, b.Slug, b.ContentHtml,
-		b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, b.Id)
+		b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, shareAlias, b.Id)
 	if err != nil {
 		return err
 	}
@@ -229,16 +243,16 @@ func getOne(id int64) (Blog, error) {
 	defer db.Close()
 
 	sqlSelect := `
-		SELECT title, slug, blogDate, year, content, thumbnail,
+		SELECT title, slug, blogDate, year, content, thumbnail, shareAlias,
 			createdOn, updatedOn, postedOn
 		FROM blogs
 		WHERE id = ?`
 	row := db.QueryRow(sqlSelect, id)
 
 	var year sql.NullInt64
-	var title, slug, content, thumbnail sql.NullString
+	var title, slug, content, thumbnail, shareAlias sql.NullString
 	var blogDate, createdOn, updatedOn, postedOn mysql.NullTime
-	err = row.Scan(&title, &slug, &blogDate, &year, &content, &thumbnail,
+	err = row.Scan(&title, &slug, &blogDate, &year, &content, &thumbnail, &shareAlias,
 		&createdOn, &updatedOn, &postedOn)
 	if err != nil {
 		return Blog{}, err
@@ -251,6 +265,7 @@ func getOne(id int64) (Blog, error) {
 	blog.Year = intValue(year)
 	blog.BlogDate = dateValue(blogDate)
 	blog.Thumbnail = stringValue(thumbnail)
+	blog.ShareAlias = stringValue(shareAlias)
 	blog.CreatedOn = timeValue(createdOn)
 	blog.UpdatedOn = timeValue(updatedOn)
 	blog.PostedOn = timeValue(postedOn)
@@ -307,6 +322,24 @@ func getIdBySlug(slug string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	return id, nil
+}
+
+func getIdByAlias(alias string) (int64, error) {
+	db, err := connectDB()
+	if err != nil {
+		return 0, err
+	}
+	defer db.Close()
+
+	var id int64
+	sqlSelect := "SELECT id FROM blogs WHERE shareAlias = ? LIMIT 1"
+	row := db.QueryRow(sqlSelect, alias)
+	err = row.Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
 	return id, nil
 }
 

@@ -17,11 +17,13 @@ CREATE TABLE blogs (
   year int,
   createdOn DATETIME NOT NULL,
   updatedOn DATETIME NULL,
-  postedOn DATETIME NULL
+  postedOn DATETIME NULL,
+  shareAlias VARCHAR(255) NULL
 );
 
 CREATE INDEX blogs_index_title ON blogs(title);
 CREATE INDEX blogs_index_blogDaten ON blogs(blogDate DESC);
+CREATE INDEX blogs_index_shareAlias ON blogs(shareAlias);
 
 
 CREATE TABLE users (

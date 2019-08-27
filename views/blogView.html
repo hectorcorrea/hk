@@ -19,9 +19,16 @@
   {{.Html}}
 </div>
 
+{{ if .ShareAlias }}
+<p class="text-muted">
+  <small>Share it: <a href="https://hectorykarla.com/shared/{{.ShareAlias}}">http://hectorykarla.com/shared/{{.ShareAlias}}</a></small>
+</p>
+{{ end }}
+
 {{ if .Session.IsAdmin }}
   <p class="text-muted">
-    <small>Created on: {{ .CreatedOn }}, Last update: {{ .UpdatedOn }}</small>
+    <small>Created on: {{ .CreatedOn }}</small><br/>
+    <small>Last update: {{ .UpdatedOn }}</small>
   </p>
 {{ end }}
 

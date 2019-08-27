@@ -10,21 +10,22 @@ import (
 )
 
 type Blog struct {
-	Id        int64
-	Title     string
-	Summary   string
-	Slug      string
-	Url       string
-	CreatedOn string
-	PostedOn  string
-	UpdatedOn string
-	Thumbnail string
-	BlogDate  string
-	Year      int
-	IsNewYear bool
-	IsDraft   bool
-	Html      template.HTML
-	Message   string
+	Id         int64
+	Title      string
+	Summary    string
+	Slug       string
+	Url        string
+	CreatedOn  string
+	PostedOn   string
+	UpdatedOn  string
+	Thumbnail  string
+	BlogDate   string
+	ShareAlias string
+	Year       int
+	IsNewYear  bool
+	IsDraft    bool
+	Html       template.HTML
+	Message    string
 	Session
 }
 
@@ -64,6 +65,7 @@ func FromBlog(blog models.Blog, session Session, raw bool) Blog {
 		vm.Html = template.HTML(addGalleryTags(html))
 	}
 
+	vm.ShareAlias = blog.ShareAlias
 	vm.CreatedOn = blog.CreatedOn
 	vm.PostedOn = blog.PostedOn
 	vm.UpdatedOn = blog.UpdatedOn
