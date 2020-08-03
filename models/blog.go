@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -128,6 +130,12 @@ func (b *Blog) beforeSave() error {
 	b.Slug = getSlug(b.Title)
 	b.UpdatedOn = dbUtcNow()
 	b.Thumbnail = strings.Replace(b.Thumbnail, "http://", "https://", -1)
+
+	if len(b.Sections) > 0 {
+		log.Printf("Using sections rather than raw HTML for blog %d, %s", b.Id, b.Slug)
+		b.ContentHtml = b.sectionsAsHtml()
+	}
+
 	b.ContentHtml = strings.Replace(b.ContentHtml, "http://www.hectorykarla.com", "https://www.hectorykarla.com", -1)
 	b.ContentHtml = strings.Replace(b.ContentHtml, "http://hectorykarla.com", "https://hectorykarla.com", -1)
 	if b.BlogDate == "" {
@@ -364,6 +372,26 @@ func getOne(id int64) (Blog, error) {
 	blog.ContentHtml = stringValue(content)
 	blog.Sections, err = blog.getSections()
 	return blog, err
+}
+
+func (b Blog) sectionsAsHtml() string {
+	html := ""
+
+	sorted := b.Sections
+	sort.Slice(sorted, func(i, j int) bool {
+		return b.Sections[i].Sequence < b.Sections[j].Sequence
+	})
+
+	for _, section := range sorted {
+		if section.Type == "h" {
+			html += "<h2>" + section.Content + "</h2>"
+		} else if section.Type == "i" {
+			html += "<img src='' />"
+		} else {
+			html += "<p>" + section.Content + "</p>"
+		}
+	}
+	return html
 }
 
 func (b *Blog) getSections() ([]BlogSection, error) {
