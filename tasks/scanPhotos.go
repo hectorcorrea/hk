@@ -2,10 +2,11 @@ package tasks
 
 import (
 	"fmt"
-	"hk/models"
 	"log"
 	"os"
 	"path/filepath"
+
+	"hectorcorrea.com/hk/models"
 )
 
 // Scan files on a folder (and its subfolders) and adds them

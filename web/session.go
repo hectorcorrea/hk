@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"hk/models"
-	"hk/viewModels"
+	"hectorcorrea.com/hk/models"
+	"hectorcorrea.com/hk/viewModels"
 )
 
 type session struct {

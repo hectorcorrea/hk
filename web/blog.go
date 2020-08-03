@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"hk/models"
-	"hk/viewModels"
+	"hectorcorrea.com/hk/models"
+	"hectorcorrea.com/hk/viewModels"
 )
 
 var blogRouter Router
@@ -21,6 +21,7 @@ func init() {
 	blogRouter.Add("GET", "/archive", blogViewAll)
 	blogRouter.Add("GET", "/about", aboutPage)
 	blogRouter.Add("GET", "/", blogViewRecent)
+	blogRouter.Add("POST", "/:year/:title/:id/edit2", blogEditNewEditor)
 	blogRouter.Add("POST", "/:year/:title/:id/edit", blogEdit)
 	blogRouter.Add("POST", "/:year/:title/:id/save", blogSave)
 	blogRouter.Add("POST", "/new", blogNew)
@@ -50,7 +51,6 @@ func blogViewOne(s session, values map[string]string) {
 	log.Print("blogViewOne")
 
 	id := idFromString(values["id"])
-	// log.Println(values)
 	if id == 0 {
 		log.Printf("blogViewOne id %s", "no id")
 		renderError(s, "No Blog ID was received", nil)
@@ -157,7 +157,6 @@ func blogViewYear(s session, values map[string]string) {
 }
 
 func blogViewAll(s session, values map[string]string) {
-	// showDrafts := s.isAuth()
 	log.Printf("Loading all...")
 	if blogs, err := models.BlogGetAll(); err != nil {
 		renderError(s, "Error fetching all", err)
@@ -177,7 +176,7 @@ func blogSave(s session, values map[string]string) {
 	id := idFromString(values["id"])
 	blog := blogFromForm(id, s)
 	if err := blog.Save(); err != nil {
-		renderError(s, fmt.Sprintf("Saving blog ID: %d"), err)
+		renderError(s, fmt.Sprintf("Saving blog ID: %d", id), err)
 	} else {
 		url := fmt.Sprintf("/%d/%s/%d", blog.Year, blog.Slug, id)
 		log.Printf("Redirect to %s", url)
@@ -190,13 +189,13 @@ func blogNew(s session, values map[string]string) {
 		renderNotAuthorized(s)
 		return
 	}
-	newId, err := models.SaveNew()
+	newID, err := models.SaveNew()
 	if err != nil {
 		renderError(s, fmt.Sprintf("Error creating new blog"), err)
 		return
 	}
-	log.Printf("Redirect to (edit for new) %d", newId)
-	values["id"] = fmt.Sprintf("%d", newId)
+	log.Printf("Redirect to (edit for new) %d", newID)
+	values["id"] = fmt.Sprintf("%d", newID)
 	blogEdit(s, values)
 }
 
@@ -222,6 +221,28 @@ func blogEdit(s session, values map[string]string) {
 	renderTemplate(s, "views/blogEdit.html", vm)
 }
 
+func blogEditNewEditor(s session, values map[string]string) {
+	if !s.isAuth() {
+		renderNotAuthorized(s)
+		return
+	}
+	id := idFromString(values["id"])
+	if id == 0 {
+		renderError(s, "No blog ID was received", nil)
+		return
+	}
+
+	log.Printf("Loading %d", id)
+	blog, err := models.BlogGetById(id)
+	if err != nil {
+		renderError(s, fmt.Sprintf("Loading ID: %d", id), err)
+		return
+	}
+
+	vm := viewModels.FromBlog(blog, s.toViewModel(), true)
+	renderTemplate(s, "views/blogEditNewEditor.html", vm)
+}
+
 func idFromString(str string) int64 {
 	id, _ := strconv.ParseInt(str, 10, 64)
 	return id
@@ -242,11 +263,41 @@ func idFromLegacyUrl(url string) int64 {
 func blogFromForm(id int64, s session) models.Blog {
 	var blog models.Blog
 	blog.Id = id
+
+	err := s.req.ParseForm()
+	if err != nil {
+		log.Printf("Error parsing form (%d): %s", id, err)
+	}
+
 	blog.Title = s.req.FormValue("title")
 	blog.Summary = s.req.FormValue("summary")
 	blog.ContentHtml = s.req.FormValue("content")
 	blog.Thumbnail = s.req.FormValue("thumbnail")
 	blog.BlogDate = s.req.FormValue("blogdate")
 	blog.ShareAlias = s.req.FormValue("shareAlias")
+
+	for k, v := range s.req.Form {
+		if strings.HasPrefix(k, "section_id_") {
+			// This is the key for an existing section.
+			// Add the exiting section to the blog.
+			id, _ := strconv.Atoi(v[0])
+			seq, _ := strconv.Atoi(s.req.FormValue("section_sequence_" + v[0]))
+			content := s.req.FormValue("section_content_" + v[0])
+			sectionType := s.req.FormValue("section_type_" + v[0])
+			blog.AddSection(int64(id), sectionType, content, seq)
+			continue
+		}
+
+		if strings.HasPrefix(k, "section_new_id_") {
+			// This is the key for a new section.
+			// Add a new section to the blog.
+			seq, _ := strconv.Atoi(s.req.FormValue("section_new_sequence_" + v[0]))
+			content := s.req.FormValue("section_new_content_" + v[0])
+			sectionType := s.req.FormValue("section_new_type_" + v[0])
+			blog.AddSection(0, sectionType, content, seq)
+			continue
+		}
+	}
+
 	return blog
 }

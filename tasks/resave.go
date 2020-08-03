@@ -1,9 +1,10 @@
 package tasks
 
 import (
-	"hk/models"
 	"log"
 	"os"
+
+	"hectorcorrea.com/hk/models"
 )
 
 // Re-saves all blogs. Used to populate the information as we

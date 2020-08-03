@@ -1,10 +1,11 @@
 package tasks
 
 import (
-	"hk/models"
 	"log"
 	"os"
 	"strings"
+
+	"hectorcorrea.com/hk/models"
 )
 
 // Adds a new guest user.

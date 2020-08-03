@@ -2,13 +2,14 @@ package web
 
 import (
 	"fmt"
-	"hk/models"
-	"hk/viewModels"
 	"log"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
+
+	"hectorcorrea.com/hk/models"
+	"hectorcorrea.com/hk/viewModels"
 )
 
 var authRouter Router

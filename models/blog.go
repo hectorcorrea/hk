@@ -26,6 +26,27 @@ type Blog struct {
 	UpdatedOn   string
 	PostedOn    string
 	Photos      []string
+	Sections    []BlogSection
+}
+
+type BlogSection struct {
+	Id       int64
+	Sequence int
+	Content  string
+	Type     string
+	Saved    bool
+}
+
+func (s BlogSection) IsHeading() bool {
+	return s.Type == "h"
+}
+
+func (s BlogSection) IsParagraph() bool {
+	return s.Type == "p"
+}
+
+func (s BlogSection) IsPhoto() bool {
+	return s.Type == "i"
 }
 
 var photoPath = "UNSET"
@@ -34,6 +55,16 @@ func (b Blog) DebugString() string {
 	str := fmt.Sprintf("Id: %d\nTitle: %s\nSummary: %s\n",
 		b.Id, b.Title, b.Summary)
 	return str
+}
+
+func (b Blog) SectionsNextSeq() int {
+	maxSeq := 0
+	for _, section := range b.Sections {
+		if section.Sequence >= maxSeq {
+			maxSeq = section.Sequence
+		}
+	}
+	return maxSeq + 1
 }
 
 func (b Blog) URL(base string) string {
@@ -111,6 +142,57 @@ func (b *Blog) beforeSave() error {
 func (b *Blog) AddPhoto(photoName string) {
 	b.ContentHtml += fmt.Sprintf("<img src=\"%s\" />", photoName)
 }
+
+// // NewSection creates a brand new section for the current blog entry
+// // and returns the id of the newly created section.
+// func (b *Blog) NewSection() (int64, error) {
+
+// 	db, err := connectDB()
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	defer db.Close()
+
+// 	sqlInsert := `
+// 		INSERT INTO blog_sections(blogId, content, sectionType, sequence)
+// 		VALUES(?, ?, ?, ?)`
+// 	result, err := db.Exec(sqlInsert, b.Id, "", "p", 0)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return result.LastInsertId()
+// }
+
+// AddSection adds a section to the blog
+func (b *Blog) AddSection(id int64, sectionType string, content string, seq int) {
+	section := BlogSection{}
+	section.Id = id
+	section.Type = sectionType
+	section.Content = content
+	section.Sequence = seq
+	b.Sections = append(b.Sections, section)
+}
+
+// // SaveSection saves the passed values to the indicated blog section
+// func (b *Blog) SaveSection(id int64, sectionType string, content string, seq int) error {
+// 	db, err := connectDB()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer db.Close()
+
+// 	sqlUpdate := `
+// 		UPDATE blog_sections
+// 		SET sectionType = ?, content = ?, sequence = ?
+// 		WHERE id = ?`
+// 	_, err = db.Exec(sqlUpdate, sectionType, content, seq, id)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
 
 func (b *Blog) getPhotos() []string {
 	// Gets the SRC path from all IMG tags. For example, for
@@ -216,17 +298,27 @@ func (b *Blog) Save() error {
 		return err
 	}
 
-	// delete previous photos attached to this blog
-	sqlDelete := `DELETE FROM blogs_photos WHERE blog_id = ?`
-	_, err = db.Exec(sqlDelete, b.Id)
-	if err != nil {
-		return err
-	}
-
-	// re-add photos
-	for _, path := range b.Photos {
-		sqlInsert := `INSERT INTO blogs_photos(blog_id, path) VALUES(?, ?)`
-		_, err = db.Exec(sqlInsert, b.Id, path)
+	// Update the blog sections (insert, update, delete)
+	for _, section := range b.Sections {
+		if section.Id != 0 {
+			if section.Content == "" {
+				sqlDelete := `DELETE FROM blog_sections WHERE id = ?`
+				_, err = db.Exec(sqlDelete, section.Id)
+			} else {
+				sqlUpdate := `UPDATE blog_sections 
+				SET sectionType = ?, content = ?, sequence = ? 
+				WHERE id = ?`
+				_, err = db.Exec(sqlUpdate, section.Type, section.Content, section.Sequence, section.Id)
+			}
+		} else {
+			if section.Content == "" {
+				// ignore it
+			} else {
+				sqlInsert := `INSERT INTO blog_sections(blogId, sectionType, content, sequence)
+				VALUES(?, ?, ?, ?)`
+				_, err = db.Exec(sqlInsert, b.Id, section.Type, section.Content, section.Sequence)
+			}
+		}
 		if err != nil {
 			return err
 		}
@@ -270,7 +362,46 @@ func getOne(id int64) (Blog, error) {
 	blog.UpdatedOn = timeValue(updatedOn)
 	blog.PostedOn = timeValue(postedOn)
 	blog.ContentHtml = stringValue(content)
-	return blog, nil
+	blog.Sections, err = blog.getSections()
+	return blog, err
+}
+
+func (b *Blog) getSections() ([]BlogSection, error) {
+	db, err := connectDB()
+	if err != nil {
+		return []BlogSection{}, err
+	}
+	defer db.Close()
+
+	sqlSelect := `
+		SELECT id, sectionType, content, sequence
+		FROM blog_sections
+		WHERE blogId = ?`
+	rows, err := db.Query(sqlSelect, b.Id)
+	if err != nil {
+		return []BlogSection{}, err
+	}
+	defer rows.Close()
+
+	var sections []BlogSection
+	var id int64
+	var sequence sql.NullInt64
+	var content, sectionType sql.NullString
+	for rows.Next() {
+		err := rows.Scan(&id, &sectionType, &content, &sequence)
+		if err != nil {
+			return []BlogSection{}, err
+		}
+		section := BlogSection{
+			Id:       id,
+			Type:     stringValue(sectionType),
+			Content:  stringValue(content),
+			Sequence: intValue(sequence),
+			Saved:    true,
+		}
+		sections = append(sections, section)
+	}
+	return sections, nil
 }
 
 func PhotoPath() (string, error) {

@@ -2,30 +2,33 @@ package viewModels
 
 import (
 	"fmt"
-	"hk/models"
 	"html/template"
 	"regexp"
 	"strings"
 	"time"
+
+	"hectorcorrea.com/hk/models"
 )
 
 type Blog struct {
-	Id         int64
-	Title      string
-	Summary    string
-	Slug       string
-	Url        string
-	CreatedOn  string
-	PostedOn   string
-	UpdatedOn  string
-	Thumbnail  string
-	BlogDate   string
-	ShareAlias string
-	Year       int
-	IsNewYear  bool
-	IsDraft    bool
-	Html       template.HTML
-	Message    string
+	Id              int64
+	Title           string
+	Summary         string
+	Slug            string
+	Url             string
+	CreatedOn       string
+	PostedOn        string
+	UpdatedOn       string
+	Thumbnail       string
+	BlogDate        string
+	ShareAlias      string
+	Year            int
+	IsNewYear       bool
+	IsDraft         bool
+	Sections        []models.BlogSection
+	SectionsNextSeq int
+	Html            template.HTML
+	Message         string
 	Session
 }
 
@@ -48,6 +51,8 @@ func FromBlog(blog models.Blog, session Session, raw bool) Blog {
 	vm.Summary = blog.Summary
 	vm.Slug = blog.Slug
 	vm.Url = blog.URL("")
+	vm.Sections = blog.Sections
+	vm.SectionsNextSeq = blog.SectionsNextSeq()
 
 	if strings.Contains(strings.ToLower(blog.Thumbnail), "_thumb.jpg") {
 		vm.Thumbnail = blog.Thumbnail

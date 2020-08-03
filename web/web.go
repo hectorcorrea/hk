@@ -3,13 +3,14 @@ package web
 import (
 	"database/sql"
 	"fmt"
-	"hk/models"
-	"hk/viewModels"
 	"html/template"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"hectorcorrea.com/hk/models"
+	"hectorcorrea.com/hk/viewModels"
 )
 
 func StartWebServer(address string) {

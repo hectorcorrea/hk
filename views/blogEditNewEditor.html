@@ -1,0 +1,100 @@
+{{ define "content" }}
+<form id="theForm" class="form-horizontal" role="form" action="{{ .Url }}/save" method="post">
+
+  <div class="form-group">
+      <button type="submit" class="btn btn-primary">Save</button>
+  </div>
+
+  <div class="form-group">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" class="form-control"
+      value="{{ .Title }}" placeholder="Blog title" autofocus/>
+  </div>
+
+  <div class="form-group">
+    <label for="title">Date</label>
+    <input type="text" id="blogdate" name="blogdate" class="form-control"
+      value="{{ .BlogDate }}" autofocus/>
+  </div>
+
+  <div class="form-group">
+    <label for="thumbnail">Thumbnail</label>
+    <input type="text" id="thumbnail" name="thumbnail" class="form-control"
+      value="{{ .Thumbnail }}" autofocus/>
+  </div>
+
+  <div class="form-group">
+    <label for="shareAlias">Share Alias</label>
+    <input type="text" id="shareAlias" name="shareAlias" class="form-control"
+      value="{{ .ShareAlias }}" autofocus/>
+  </div>
+
+  {{ range $key, $section := .Sections }}
+    <div class="form-group">
+      <label for="text">Section</label>
+      <select name="section_type_{{ .Id }}" id="section_type_{{ .Id }}">
+        <option value="h" {{if .IsHeading}} selected {{end}}>Heading</option>
+        <option value="p" {{if .IsParagraph}} selected {{end}}>Paragraph</option>
+        <option value="i" {{if .IsPhoto}} selected {{end}}>Photo</option>
+      </select>
+      <textarea id="section_content_{{ .Id }}" name="section_content_{{ .Id }}" class="form-control" rows="5" placeholder="Enter text here">{{ .Content }}</textarea>
+      <input type="text" id="section_id_{{ .Id }}" name="section_id_{{ .Id }}" value="{{ .Id }}" class="hidden" />
+      <input type="text" id="section_sequence_{{ .Id }}" name="section_sequence_{{ .Id }}" value="{{ .Sequence }}" class="hidden" />
+    </div>
+  {{ end }}
+
+</form>
+<button class="btn btn-primary" id="addSection">Add</button>
+
+
+<p>ID: {{ .Id }}</p>
+<p>Created: {{ .CreatedOn }}</p>
+<p>Updated: {{ .UpdatedOn }}</p>
+<p>Posted: {{ .PostedOn }}</p>
+<input type="text" id="nextSequence" value="{{ .SectionsNextSeq }}" />
+
+{{ end }}
+
+{{ define "javascript_bottom" }}
+<script>
+
+$(function() {
+
+  var nextNewId = 1;
+
+  $("#addSection").on("click", function(e) {
+
+    var html, newSeqId, nextSeq;
+    // Add the input elements for the new section
+    html = '<div class="form-group">';
+    html += '  <label for="text">Section</label>';
+    html += '  <select name="section_new_type_next_id" id="section_new_type_next_id">';
+    html += '    <option value="h">Heading</option>';
+    html += '    <option value="p">Paragraph</option>';
+    html += '    <option value="i">Photo</option>';
+    html += '  </select>';
+    html += '  <textarea id="section_new_content_next_id" name="section_new_content_next_id" class="form-control" rows="5" placeholder="Enter text here"></textarea>';
+    html += '  <input type="text" id="section_new_id_next_id" name="section_new_id_next_id" value="" class="xhidden" />';
+    html += '  <input type="text" id="section_new_sequence_next_id" name="section_new_sequence_next_id" value="" class="xhidden" />';
+    html += '</div>';
+    html = html.replace(/_next_id/g, "_" + nextNewId.toString())
+    $("#theForm").append(html);
+
+    // Set the value for the new id
+    newId = "#section_new_id_" + nextNewId.toString();
+    $(newId).val(nextNewId.toString());
+
+    // Set sequence value for the new section 
+    nextSeq = parseInt($("#nextSequence").val(), 10);
+    newSeqId = "#section_new_sequence_" + nextNewId.toString();
+    $(newSeqId).val(nextSeq);
+
+    // Bump our internal counters
+    $("#nextSequence").val(nextSeq + 1);
+    nextNewId += 1;
+  });
+});
+
+</script>
+
+{{ end }}
