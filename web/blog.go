@@ -22,7 +22,7 @@ func init() {
 	blogRouter.Add("GET", "/about", aboutPage)
 	blogRouter.Add("GET", "/", blogViewRecent)
 	blogRouter.Add("POST", "/:year/:title/:id/edit2", blogEditNewEditor)
-	blogRouter.Add("POST", "/:year/:title/:id/edit", blogEdit)
+	blogRouter.Add("GET", "/:year/:title/:id/edit", blogEdit)
 	blogRouter.Add("POST", "/:year/:title/:id/save", blogSave)
 	blogRouter.Add("POST", "/new", blogNew)
 }

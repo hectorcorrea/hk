@@ -35,18 +35,29 @@
       <select name="section_type_{{ .Id }}" id="section_type_{{ .Id }}">
         <option value="h" {{if .IsHeading}} selected {{end}}>Heading</option>
         <option value="p" {{if .IsParagraph}} selected {{end}}>Paragraph</option>
+        <option value="p-en" {{if .IsParagraphEN}} selected {{end}}>Paragraph (English)</option>
+        <option value="p-es" {{if .IsParagraphES}} selected {{end}}>Paragraph (Spanish)</option>
         <option value="i" {{if .IsPhoto}} selected {{end}}>Photo</option>
       </select>
       <textarea id="section_content_{{ .Id }}" name="section_content_{{ .Id }}" class="form-control" rows="5" placeholder="Enter text here">{{ .Content }}</textarea>
       <input type="text" id="section_id_{{ .Id }}" name="section_id_{{ .Id }}" value="{{ .Id }}" class="hidden" />
-      <input type="text" id="section_sequence_{{ .Id }}" name="section_sequence_{{ .Id }}" value="{{ .Sequence }}" class="hidden" />
+      Order: <input type="text" id="section_sequence_{{ .Id }}" name="section_sequence_{{ .Id }}" value="{{ .Sequence }}" class="xhidden" />
     </div>
   {{ end }}
-
 </form>
-<button class="btn btn-primary" id="addSection">Add</button>
 
+<div class="btn-toolbar" role="toolbar">
+  <div class="btn-group" role="group">
+    <button class="btn btn-default" id="addHeading">Add Heading</button>
+    <button class="btn btn-default" id="addParagraph">Add Paragraph</button>
+    <button class="btn btn-default" id="addPhoto">Add Photo</button>
+  </div>
+  <div class="btn-group" role="group">
+    <button type="submit" class="btn btn-primary" id="saveBottom">Save</button>
+  </div>
+</div>
 
+<hr>
 <p>ID: {{ .Id }}</p>
 <p>Created: {{ .CreatedOn }}</p>
 <p>Updated: {{ .UpdatedOn }}</p>
@@ -59,22 +70,39 @@
 <script>
 
 $(function() {
-
   var nextNewId = 1;
-
-  $("#addSection").on("click", function(e) {
+  var addSection = function(type) {
 
     var html, newSeqId, nextSeq;
     // Add the input elements for the new section
     html = '<div class="form-group">';
     html += '  <label for="text">Section</label>';
     html += '  <select name="section_new_type_next_id" id="section_new_type_next_id">';
-    html += '    <option value="h">Heading</option>';
-    html += '    <option value="p">Paragraph</option>';
-    html += '    <option value="i">Photo</option>';
+    
+    if (type == "heading") {
+      html += '    <option value="h" selected>Heading</option>';
+    } else {
+      html += '    <option value="h" >Heading</option>';
+    }
+
+    if (type == "paragraph") {
+      html += '    <option value="p" selected>Paragraph</option>';
+    } else {
+      html += '    <option value="p">Paragraph</option>';
+    }
+
+    html += '    <option value="p-en">Paragraph (English)</option>';
+    html += '    <option value="p-es">Paragraph (Spanish)</option>';
+
+    if (type == "photo") {
+      html += '    <option value="i" selected>Photo</option>';
+    } else {
+      html += '    <option value="i">Photo</option>';
+    }
     html += '  </select>';
+
     html += '  <textarea id="section_new_content_next_id" name="section_new_content_next_id" class="form-control" rows="5" placeholder="Enter text here"></textarea>';
-    html += '  <input type="text" id="section_new_id_next_id" name="section_new_id_next_id" value="" class="xhidden" />';
+    html += '  <input type="text" id="section_new_id_next_id" name="section_new_id_next_id" value="" class="hidden" />';
     html += '  <input type="text" id="section_new_sequence_next_id" name="section_new_sequence_next_id" value="" class="xhidden" />';
     html += '</div>';
     html = html.replace(/_next_id/g, "_" + nextNewId.toString())
@@ -92,6 +120,22 @@ $(function() {
     // Bump our internal counters
     $("#nextSequence").val(nextSeq + 1);
     nextNewId += 1;
+  }
+
+  $("#addHeading").on("click", function(e) { 
+    addSection("heading");
+  });
+  
+  $("#addParagraph").on("click", function(e) { 
+    addSection("paragraph"); 
+  });
+
+  $("#addPhoto").on("click", function(e) {
+    addSection("photo"); 
+  });
+
+  $("#saveBottom").on("click", function(e) {
+    $( "#theForm" ).submit();
   });
 });
 

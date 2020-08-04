@@ -9,3 +9,6 @@ CREATE TABLE blog_sections (
 );
 
 CREATE INDEX blog_sections_sequence ON blog_sections(blogId, sequence);
+
+ALTER TABLE blogs ADD COLUMN contentRaw MEDIUMTEXT NULL;
+UPDATE blogs SET contentRaw = content;

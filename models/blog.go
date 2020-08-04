@@ -47,6 +47,13 @@ func (s BlogSection) IsParagraph() bool {
 	return s.Type == "p"
 }
 
+func (s BlogSection) IsParagraphEN() bool {
+	return s.Type == "p-en"
+}
+
+func (s BlogSection) IsParagraphES() bool {
+	return s.Type == "p-es"
+}
 func (s BlogSection) IsPhoto() bool {
 	return s.Type == "i"
 }
@@ -386,7 +393,11 @@ func (b Blog) sectionsAsHtml() string {
 		if section.Type == "h" {
 			html += "<h2>" + section.Content + "</h2>"
 		} else if section.Type == "i" {
-			html += "<img src='' />"
+			html += fmt.Sprintf("<img alt=\"\" src=\"%s\" />", section.Content)
+		} else if section.Type == "p-en" {
+			html += "<p class=\"en\">" + section.Content + "</p>"
+		} else if section.Type == "p-es" {
+			html += "<p class=\"es\">" + section.Content + "</p>"
 		} else {
 			html += "<p>" + section.Content + "</p>"
 		}
