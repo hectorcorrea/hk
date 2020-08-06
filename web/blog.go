@@ -196,7 +196,7 @@ func blogNew(s session, values map[string]string) {
 	}
 	log.Printf("Redirect to (edit for new) %d", newID)
 	values["id"] = fmt.Sprintf("%d", newID)
-	blogEdit(s, values)
+	blogEditNewEditor(s, values)
 }
 
 func blogEdit(s session, values map[string]string) {

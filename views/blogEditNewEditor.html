@@ -1,4 +1,12 @@
 {{ define "content" }}
+
+<style>
+  .debugInfo {
+    color: #aeaea8;
+    font-size: 14px;
+  }
+</style>
+
 <form id="theForm" class="form-horizontal" role="form" action="{{ .Url }}/save" method="post">
 
   <div class="form-group">
@@ -57,13 +65,16 @@
   </div>
 </div>
 
-<hr>
-<p>ID: {{ .Id }}</p>
-<p>Created: {{ .CreatedOn }}</p>
-<p>Updated: {{ .UpdatedOn }}</p>
-<p>Posted: {{ .PostedOn }}</p>
-<input type="text" id="nextSequence" value="{{ .SectionsNextSeq }}" />
-
+<div style="margin-left: -20px;margin-top: 10px;">
+  <span class="debugInfo">Debug info</span>
+  <ul>
+    <li class="debugInfo">ID: {{ .Id }}</li>
+    <li class="debugInfo">Created: {{ .CreatedOn }}</li>
+    <li class="debugInfo">Updated: {{ .UpdatedOn }}</li>
+    <li class="debugInfo">Posted: {{ .PostedOn }}</li>
+  </ul>
+  <input type="text" id="nextSequence" value="{{ .SectionsNextSeq }}" class="hidden"/>
+</div>
 {{ end }}
 
 {{ define "javascript_bottom" }}

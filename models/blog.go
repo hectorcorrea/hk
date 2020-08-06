@@ -138,9 +138,10 @@ func (b *Blog) beforeSave() error {
 	b.UpdatedOn = dbUtcNow()
 	b.Thumbnail = strings.Replace(b.Thumbnail, "http://", "https://", -1)
 
-	if len(b.Sections) > 0 {
+	html := b.sectionsAsHtml()
+	if html != "" {
 		log.Printf("Using sections rather than raw HTML for blog %d, %s", b.Id, b.Slug)
-		b.ContentHtml = b.sectionsAsHtml()
+		b.ContentHtml = html
 	}
 
 	b.ContentHtml = strings.Replace(b.ContentHtml, "http://www.hectorykarla.com", "https://www.hectorykarla.com", -1)
@@ -158,27 +159,6 @@ func (b *Blog) AddPhoto(photoName string) {
 	b.ContentHtml += fmt.Sprintf("<img src=\"%s\" />", photoName)
 }
 
-// // NewSection creates a brand new section for the current blog entry
-// // and returns the id of the newly created section.
-// func (b *Blog) NewSection() (int64, error) {
-
-// 	db, err := connectDB()
-// 	if err != nil {
-// 		return 0, err
-// 	}
-// 	defer db.Close()
-
-// 	sqlInsert := `
-// 		INSERT INTO blog_sections(blogId, content, sectionType, sequence)
-// 		VALUES(?, ?, ?, ?)`
-// 	result, err := db.Exec(sqlInsert, b.Id, "", "p", 0)
-// 	if err != nil {
-// 		return 0, err
-// 	}
-
-// 	return result.LastInsertId()
-// }
-
 // AddSection adds a section to the blog
 func (b *Blog) AddSection(id int64, sectionType string, content string, seq int) {
 	section := BlogSection{}
@@ -188,26 +168,6 @@ func (b *Blog) AddSection(id int64, sectionType string, content string, seq int)
 	section.Sequence = seq
 	b.Sections = append(b.Sections, section)
 }
-
-// // SaveSection saves the passed values to the indicated blog section
-// func (b *Blog) SaveSection(id int64, sectionType string, content string, seq int) error {
-// 	db, err := connectDB()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer db.Close()
-
-// 	sqlUpdate := `
-// 		UPDATE blog_sections
-// 		SET sectionType = ?, content = ?, sequence = ?
-// 		WHERE id = ?`
-// 	_, err = db.Exec(sqlUpdate, sectionType, content, seq, id)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
 
 func (b *Blog) getPhotos() []string {
 	// Gets the SRC path from all IMG tags. For example, for
@@ -301,14 +261,29 @@ func (b *Blog) Save() error {
 		shareAlias = sql.NullString{String: b.ShareAlias, Valid: true}
 	}
 
-	sqlUpdate := `
-		UPDATE blogs
-		SET title = ?, slug = ?, content = ?,
-			blogDate = ?, year = ?, updatedOn = ?,
-			thumbnail = ?, shareAlias = ?
-		WHERE id = ?`
-	_, err = db.Exec(sqlUpdate, b.Title, b.Slug, b.ContentHtml,
-		b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, shareAlias, b.Id)
+	if b.ContentHtml != "" {
+		// Update all fields, including contentHtml
+		sqlUpdate := `
+			UPDATE blogs
+			SET title = ?, slug = ?, content = ?,
+				blogDate = ?, year = ?, updatedOn = ?,
+				thumbnail = ?, shareAlias = ?
+			WHERE id = ?`
+		_, err = db.Exec(sqlUpdate, b.Title, b.Slug, b.ContentHtml,
+			b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, shareAlias, b.Id)
+	} else {
+		// No ContentHtml received, don't update the content field
+		// (this is so that we don't overwrite old entries
+		// accidentally while testing the new editor)
+		sqlUpdate := `
+			UPDATE blogs
+			SET title = ?, slug = ?,
+				blogDate = ?, year = ?, updatedOn = ?,
+				thumbnail = ?, shareAlias = ?
+			WHERE id = ?`
+		_, err = db.Exec(sqlUpdate, b.Title, b.Slug,
+			b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, shareAlias, b.Id)
+	}
 	if err != nil {
 		return err
 	}
@@ -390,10 +365,20 @@ func (b Blog) sectionsAsHtml() string {
 	})
 
 	for _, section := range sorted {
+		content := strings.Trim(section.Content, " \r\n")
+		if content == "" {
+			continue
+		}
+
 		if section.Type == "h" {
 			html += "<h2>" + section.Content + "</h2>"
 		} else if section.Type == "i" {
-			html += fmt.Sprintf("<img alt=\"\" src=\"%s\" />", section.Content)
+			for _, line := range strings.Split(section.Content, "\r") {
+				image := strings.Trim(line, " \r\n")
+				if image != "" {
+					html += fmt.Sprintf("<img alt=\"\" src=\"%s\" />", image)
+				}
+			}
 		} else if section.Type == "p-en" {
 			html += "<p class=\"en\">" + section.Content + "</p>"
 		} else if section.Type == "p-es" {
