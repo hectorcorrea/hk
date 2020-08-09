@@ -58,6 +58,17 @@ func (s BlogSection) IsPhoto() bool {
 	return s.Type == "i"
 }
 
+func (s BlogSection) Lines() []string {
+	lines := []string{}
+	for _, line := range strings.Split(s.Content, "\r") {
+		image := strings.Trim(line, " \r\n")
+		if image != "" {
+			lines = append(lines, image)
+		}
+	}
+	return lines
+}
+
 var photoPath = "UNSET"
 
 func (b Blog) DebugString() string {

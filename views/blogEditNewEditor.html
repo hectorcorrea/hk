@@ -50,6 +50,15 @@
       <textarea id="section_content_{{ .Id }}" name="section_content_{{ .Id }}" class="form-control" rows="5" placeholder="Enter text here">{{ .Content }}</textarea>
       <input type="text" id="section_id_{{ .Id }}" name="section_id_{{ .Id }}" value="{{ .Id }}" class="hidden" />
       Order: <input type="text" id="section_sequence_{{ .Id }}" name="section_sequence_{{ .Id }}" value="{{ .Sequence }}" class="xhidden" />
+
+      {{ if .IsPhoto }}
+        <div>
+        {{ range $x, $line := .Lines }}
+          <img src="{{ $line }}" title="{{ $line }}" height="80px"/>
+        {{ end }}
+      </div>
+      {{ end }}
+
     </div>
   {{ end }}
 </form>
