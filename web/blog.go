@@ -21,8 +21,8 @@ func init() {
 	blogRouter.Add("GET", "/archive", blogViewAll)
 	blogRouter.Add("GET", "/about", aboutPage)
 	blogRouter.Add("GET", "/", blogViewRecent)
-	blogRouter.Add("POST", "/:year/:title/:id/edit2", blogEditNewEditor)
-	blogRouter.Add("GET", "/:year/:title/:id/edit", blogEdit)
+	blogRouter.Add("GET", "/:year/:title/:id/edit", blogEditNewEditor)
+	blogRouter.Add("GET", "/:year/:title/:id/editOld", blogEditOldEditor)
 	blogRouter.Add("POST", "/:year/:title/:id/save", blogSave)
 	blogRouter.Add("POST", "/new", blogNew)
 }
@@ -199,7 +199,7 @@ func blogNew(s session, values map[string]string) {
 	blogEditNewEditor(s, values)
 }
 
-func blogEdit(s session, values map[string]string) {
+func blogEditOldEditor(s session, values map[string]string) {
 	if !s.isAuth() {
 		renderNotAuthorized(s)
 		return
@@ -218,7 +218,7 @@ func blogEdit(s session, values map[string]string) {
 	}
 
 	vm := viewModels.FromBlog(blog, s.toViewModel(), true)
-	renderTemplate(s, "views/blogEdit.html", vm)
+	renderTemplate(s, "views/blogEditOldEditor.html", vm)
 }
 
 func blogEditNewEditor(s session, values map[string]string) {

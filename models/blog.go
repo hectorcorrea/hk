@@ -149,6 +149,7 @@ func (b *Blog) beforeSave() error {
 	b.UpdatedOn = dbUtcNow()
 	b.Thumbnail = strings.Replace(b.Thumbnail, "http://", "https://", -1)
 
+	b.sortSections()
 	html := b.sectionsAsHtml()
 	if html != "" {
 		log.Printf("Using sections rather than raw HTML for blog %d, %s", b.Id, b.Slug)
@@ -284,7 +285,7 @@ func (b *Blog) Save() error {
 			b.BlogDate, b.Year, dbUtcNow(), b.Thumbnail, shareAlias, b.Id)
 	} else {
 		// No ContentHtml received, don't update the content field
-		// (this is so that we don't overwrite old entries
+		// (this is so that we don't overwrite old blog entries
 		// accidentally while testing the new editor)
 		sqlUpdate := `
 			UPDATE blogs
@@ -365,6 +366,23 @@ func getOne(id int64) (Blog, error) {
 	blog.ContentHtml = stringValue(content)
 	blog.Sections, err = blog.getSections()
 	return blog, err
+}
+
+func (b *Blog) sortSections() {
+	// Make sure they are in the correct order by sequence
+	sorted := b.Sections
+	sort.Slice(sorted, func(i, j int) bool {
+		return b.Sections[i].Sequence < b.Sections[j].Sequence
+	})
+
+	// Renum so each sequence is the previous + 5
+	renum := []BlogSection{}
+	for i, section := range b.Sections {
+		section.Sequence = (i + 1) * 5
+		renum = append(renum, section)
+	}
+
+	b.Sections = renum
 }
 
 func (b Blog) sectionsAsHtml() string {
