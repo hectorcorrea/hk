@@ -123,21 +123,27 @@ func addGalleryTags(html string) string {
 }
 
 // Converts
-//		<img src="somefile_thumb.jpg" alt="y" />
+//		<img src="somefile_thumb.jpg" alt="y" data-description="z"/>
 // into
-// 		<a href="somefile.jpg">
-//			<img="somefile_thumb.jpg" alt="y" />
+// 		<a href="somefile.jpg" title="y" data-description="z">
+//			<img="somefile_thumb.jpg" alt="y" data-description="z"/>
 // 		</a>
 func wrapImgTag(img string) string {
 	reSrc := regexp.MustCompile("src=\"(.*?)\"")
 	reAlt := regexp.MustCompile("alt=\"(.*?)\"")
+
 	src := reSrc.FindString(img) // src="hello.jpg"
 	srcValue := TextInQuotes(src)
 	alt := reAlt.FindString(img) // alt="hello"
+	altValue := TextInQuotes(alt)
+
+	reDesc := regexp.MustCompile("data-description=\"(.*?)\"")
+	desc := TextInQuotes(reDesc.FindString(img))
+
 	file := strings.Replace(srcValue, "_thumb.jpg", ".jpg", 1)
 	newImg := "<img src=\"" + srcValue + "\" " + alt + " />"
 
-	newTag := "<a class=\"imgLink\" href=\"" + file + "\" >\r\n"
+	newTag := "<a title=\"" + altValue + "\" class=\"imgLink\" href=\"" + file + "\" data-description=\"" + desc + "\">\r\n"
 	newTag += "  " + newImg + "\r\n"
 	newTag += "</a>\r\n"
 	return newTag

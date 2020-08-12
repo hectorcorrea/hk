@@ -393,6 +393,8 @@ func (b Blog) sectionsAsHtml() string {
 		return b.Sections[i].Sequence < b.Sections[j].Sequence
 	})
 
+	imageTitle := ""
+	imageDescID := ""
 	for _, section := range sorted {
 		content := strings.Trim(section.Content, " \r\n")
 		if content == "" {
@@ -401,11 +403,14 @@ func (b Blog) sectionsAsHtml() string {
 
 		if section.Type == "h" {
 			html += "<h2>" + section.Content + "</h2>"
+			// We use this header as the "title" for the following images
+			imageTitle = section.Content
+			imageDescID = ""
 		} else if section.Type == "i" {
 			for _, line := range strings.Split(section.Content, "\r") {
 				image := strings.Trim(line, " \r\n")
 				if image != "" {
-					html += fmt.Sprintf("<img alt=\"\" src=\"%s\" />", image)
+					html += fmt.Sprintf("<img src=\"%s\" alt=\"%s\" data-description=\"%s\" />", image, imageTitle, imageDescID)
 				}
 			}
 		} else if section.Type == "p-en" {
@@ -413,7 +418,11 @@ func (b Blog) sectionsAsHtml() string {
 		} else if section.Type == "p-es" {
 			html += "<p class=\"es\">" + section.Content + "</p>"
 		} else {
-			html += "<p>" + section.Content + "</p>"
+			// We use this sectionId as the reference to get the "description" for the
+			// following images (we only store the sectionId, the actual text is fetched
+			// via JavaScript when the image is loaded)
+			html += fmt.Sprintf("<p id=\"section_%d\">%s</p>", section.Id, section.Content)
+			imageDescID = fmt.Sprintf("section_%d", section.Id)
 		}
 	}
 	return html

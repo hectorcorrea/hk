@@ -1,4 +1,18 @@
 {{ define "content" }}
+
+<style>
+  .blueimp-gallery-controls > .description {
+    display: block; 
+    margin-top: -45px;
+    padding: 5px 15px 5px 15px;
+    color: #f7e2e2;
+    background-color: #6f4a4a;
+    font-size: 12px;
+    position: fixed;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+</style>
+
 <p style="float:right;">
   <a href="/archive/{{ .Year }}">Back to {{ .Year }}</a>
 </p>
@@ -42,6 +56,7 @@
 <div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls">
     <div class="slides"></div>
     <h3 class="title"></h3>
+    <p class="description"></p>
     <a class="prev">‹</a>
     <a class="next">›</a>
     <a class="close">×</a>
@@ -60,6 +75,23 @@
       var target = event.target;
       var link = target.src ? target.parentNode : target;
       var options = {index: link, event: event};
+
+      // source: https://stackoverflow.com/questions/19768442/adding-descriptions-inside-a-blueimp-gallery
+      options.onslide = function (index, slide) {
+        var nodes, text, descId;
+        nodes = this.container.find('.description');
+        if (nodes.length > 0) {
+          nodes.empty();
+          descId = this.list[index].getAttribute("data-description");
+          if (descId) {
+            text = $("#" + descId).text()
+            if (text != "") {
+              nodes[0].innerHTML = text;
+            }
+          }
+        }
+      }
+
       var links = $('.imgLink');
       blueimp.Gallery(links, options);
     });
